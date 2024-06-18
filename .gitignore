@@ -2,3 +2,5 @@ Retiro.code-workspace
 .html
 .npy
 .pt
+.pyc
+checkpoints
