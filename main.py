@@ -1,0 +1,262 @@
+import torch
+from torch.utils.data import DataLoader
+import numpy as np
+
+from data_utils.dataset_prep import create_loader, prepare_dataset
+from data_utils.utils import parse_arguments, get_seed
+from models.retiro_model import GNOT
+from train_utils.navier_stokes_autograd import ns_pde_autograd_loss, wrapped_model
+from train_utils.dynamic_loss_balancing import RELOBRALO
+from train_utils.logging import loss_aggregator, total_loss_list, save_checkpoint
+from train_utils.default_args import get_default_args, args_override 
+
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+global ARGS 
+ARGS = parse_arguments()
+
+torch.manual_seed(ARGS.seed)
+torch.cuda.manual_seed(ARGS.seed)
+np.random.seed(ARGS.seed)
+torch.cuda.manual_seed_all(ARGS.seed)
+get_seed(ARGS.seed, printout=True, cudnn=False)
+seed_generator = torch.Generator().manual_seed(42)
+
+
+
+
+def hybrid_train_batch(model, dataloader, optimizer, loss_function, hybrid_type = 'Train', output_normalizer=None, keys_normalizer=None, dyn_loss_bal = False):
+    l_nu = 10 # (reynolds number multiplier L/nu * lid velocity)
+
+    if hybrid_type in ['Train','Monitor']:
+        assert (model.output_normalizer is not None or output_normalizer is not None), \
+            'Output normalizer needs to be defined in function if Wrapped model does not feature output normalizer in forward()'
+        assert keys_normalizer is not None, 'Keys need to be un-normalized for PDE calculation'
+
+    if dyn_loss_bal and hybrid_type == 'Train': 
+        relobralo = RELOBRALO(device=device) 
+
+    keys = ['Supervised Loss', 'PDE 1 (c)', 'PDE 2 (x)', 'PDE 3 (y)']
+    loss_logger = loss_aggregator()
+
+    for x, x_i, y,__ in dataloader:
+        x, x_i, y = x.to(device), x_i.to(device), y.to(device)
+        x.requires_grad = True
+
+        optimizer.zero_grad()
+        all_losses_list = []
+        
+        # infer model
+        out = model(x, inputs=x_i)
+
+        # Calculate supervised pointwise loss
+        supervised_loss = loss_function(out,y)
+        all_losses_list += [supervised_loss]
+
+        # Un-normalize output if not already in wrapped model forward()
+        if model.output_normalizer is None:
+            out = output_normalizer.transform(out, inverse = True)          
+        
+        # Caclulate PDE Losses
+        if hybrid_type in ['Train','Monitor']:
+            x_i = keys_normalizer.transform(x_i, inverse = True)  
+            pde_loss_list   = ns_pde_autograd_loss(x,out,Re=x_i*l_nu)
+            all_losses_list += pde_loss_list
+
+        # Balance Losses
+        if dyn_loss_bal and hybrid_type == 'Train':    
+            total_losses_bal = relobralo(loss_list=all_losses_list)         # Dynamic Balance Losses
+        elif hybrid_type == 'Train':               
+            total_losses_bal = sum(all_losses_list)/len(all_losses_list)    # Simply Mean Losses
+        else:
+            total_losses_bal = supervised_loss                              # Only backwards bass supervised loss
+        
+        # Store losses:
+        loss_dict = {keys[i]:j.item() for i,j in enumerate(all_losses_list)}
+        if dyn_loss_bal:
+            loss_dict | {'balanced ' + keys[i]:j.item() for i,j in enumerate(total_losses_bal)}
+        loss_logger.add(loss_dict)
+
+        # Update model
+        total_losses_bal.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1000)
+        optimizer.step()
+
+        break
+    
+    return loss_logger.aggregate()
+
+
+def unsupervised_train(model, dataloader, optimizer, output_normalizer=None, keys_normalizer=None, dyn_loss_bal=False):
+
+    l_nu = 10 # (reynolds number multiplier L/nu * lid velocity)
+
+    assert model.output_normalizer is None and output_normalizer is not None, 'Output normalizer needs to be defined in function if'\
+            ' Wrapped model does not feature output normalizer in forward()'
+
+    if dyn_loss_bal: 
+        relobralo = RELOBRALO(device=device) 
+
+    keys = ['Unsupervised PDE 1 (c)', 'Unsupervised PDE 2 (x)', 'Unsupervised PDE 3 (y)']
+    loss_logger = loss_aggregator()
+    all_losses_list = []
+
+    for x, x_i,__ in dataloader:
+        x, x_i = x.to(device), x_i.to(device)
+        x.requires_grad = True
+
+        optimizer.zero_grad()
+
+        # infer model
+        out = model(x, inputs=x_i)
+
+        # Un-normalize output if not already in wrapped model forward()
+        if model.output_normalizer is None:
+            out = output_normalizer.transform(out, inverse = True)          
+        
+        # Caclulate PDE Losses
+        x_i = keys_normalizer.transform(x_i, inverse = True)  
+        pde_loss_list   = ns_pde_autograd_loss(x,out,Re=x_i*l_nu)
+        all_losses_list += pde_loss_list
+
+        # Balance Losses
+        if dyn_loss_bal:    
+            total_losses_bal = relobralo(loss_list=all_losses_list)         # Dynamic Balance Losses
+        else:      
+            total_losses_bal = sum(all_losses_list)/len(all_losses_list)    # Simply Mean Losses
+        
+        # Store losses:
+        loss_dict = {keys[i]:j.item() for i,j in enumerate(all_losses_list)}
+        if dyn_loss_bal:
+            loss_dict | {'balanced ' + keys[i]:j.item() for i,j in enumerate(total_losses_bal)}
+        loss_logger.add(loss_dict)
+
+        # Update model
+        total_losses_bal.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1000)
+        optimizer.step()
+        
+        break
+    
+    return loss_logger.aggregate()
+
+
+def validation(model, dataloader, loss_function):
+    model.eval()
+    with torch.no_grad():
+        val_loss = 0
+        for x, x_i, y,__ in dataloader:
+            x, x_i, y = x.to(device), x_i.to(device), y.to(device)
+            
+            out = model(x,inputs=x_i)      
+            
+            val_loss += loss_function(out, y).item()
+            break
+        val_loss = val_loss/len(dataloader)
+
+    return {'Validation Loss' :val_loss}
+
+
+
+if __name__ == '__main__':
+
+    # 0. Get Arguments 
+    dataset_args, model_args, training_args = get_default_args()
+    args_override(dataset_args, model_args, training_args, ARGS)
+
+
+    # 1. Dataset Preperations:
+    dataset = prepare_dataset(dataset_args, unsupervised=False)
+    torch_dataset = create_loader(dataset, dataset_args)
+    train_loader = DataLoader(
+                            dataset=torch_dataset,
+                            batch_size=dataset_args['batchsize'],
+                            shuffle=True,
+                            generator=seed_generator
+                        )
+
+    if training_args['Key_only_batches'] > 0:
+        keys_only_dataset = prepare_dataset(dataset_args, unsupervised=True, reference_data_set=dataset)
+        keys_only_torch_dataset = create_loader(keys_only_dataset, dataset_args)
+        keys_only_train_loader = DataLoader(
+                                            dataset=keys_only_torch_dataset,
+                                            batch_size=dataset_args['batchsize'],
+                                            shuffle=True,
+                                            generator=seed_generator
+                                        )
+    
+    if training_args['eval_while_training']:
+        dataset_args['train'] = False
+        val_torch_dataset = create_loader(dataset, dataset_args)
+        val_loader = DataLoader(
+                                dataset=val_torch_dataset,
+                                batch_size=1,
+                                shuffle=False,
+                                generator=seed_generator
+                            )
+
+    # 2. Initialize Model:
+    model = GNOT()
+    
+    if model_args['init_w']:
+        model.apply(model._init_weights)
+
+    model = wrapped_model(model=model,
+                          query_normalizer=dataset.query_normalizer,
+                          )
+    
+    if training_args['DP']:
+       model = torch.nn.DataParallel(model)
+
+    model = model.to(device)
+
+
+    # 3. Training Hyperparameters:
+    train_logger = total_loss_list(model_config=model_args, training_config=training_args, data_config=dataset_args)
+    optimizer = torch.optim.AdamW(model.parameters(), 
+                                    betas=(0.9, 0.999), 
+                                    lr=training_args['base_lr'],
+                                    weight_decay=training_args['weight-decay']
+                                    )
+    if training_args['Secondary_optimizer']:
+        optimizer2 = torch.optim.AdamW(model.parameters(), 
+                                    betas=(0.9, 0.999), 
+                                    lr=training_args['base_lr'],
+                                    weight_decay=training_args['weight-decay']
+                                    )
+    
+    # 4. Train Epochs
+    for epoch in range(training_args['epochs']):
+
+        output_log = hybrid_train_batch(model, 
+                                        train_loader, 
+                                        optimizer, 
+                                        loss_function = torch.nn.MSELoss(), 
+                                        hybrid_type=training_args['Hybrid_type'], 
+                                        output_normalizer=dataset.output_normalizer,
+                                        keys_normalizer=dataset.input_f_normalizer,
+                                        dyn_loss_bal = training_args['dynamic_balance']
+                                        )
+        train_logger.update(output_log)
+        
+        if training_args['Key_only_batches'] > 0:
+            output_log = unsupervised_train(model, 
+                                            keys_only_train_loader, 
+                                            optimizer = optimizer2 if training_args['Secondary_optimizer'] else optimizer, 
+                                            output_normalizer=dataset.output_normalizer, 
+                                            keys_normalizer=dataset.input_f_normalizer,
+                                            dyn_loss_bal = training_args['dynamic_balance']
+                                            )
+            train_logger.update(output_log)
+            
+        if training_args['eval_while_training']:
+            output_log = validation(model, val_loader, loss_function=torch.nn.MSELoss())
+            train_logger.update(output_log)
+
+    # Save model checkpoints
+    save_checkpoint(training_args["save_dir"], 
+                    training_args["save_name"], 
+                    model=model, 
+                    loss_dict=train_logger.dictionary, 
+                    optimizer=optimizer) 

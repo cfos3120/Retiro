@@ -3,4 +3,5 @@ Retiro.code-workspace
 .npy
 .pt
 .pyc
+*.pyc
 checkpoints
