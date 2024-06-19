@@ -163,7 +163,7 @@ if __name__ == '__main__':
 
     # 0. Get Arguments 
     dataset_args, model_args, training_args = get_default_args()
-    args_override(dataset_args, model_args, training_args, ARGS)
+    dataset_args, model_args, training_args = args_override(dataset_args, model_args, training_args, ARGS)
 
 
     # 1. Dataset Preperations:
