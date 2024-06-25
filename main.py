@@ -74,8 +74,9 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function, hybrid_type 
         
         # Store losses:
         loss_dict = {keys[i]:j.item() for i,j in enumerate(all_losses_list)}
-        if dyn_loss_bal:
-            loss_dict | {'balanced ' + keys[i]:j.item() for i,j in enumerate(total_losses_bal)}
+        if dyn_loss_bal and hybrid_type == 'Train':
+            loss_dict.update({i:relobralo.lam[i].item() for i in relobralo.lam.keys()})
+
         loss_logger.add(loss_dict)
 
         # Update model
@@ -129,7 +130,7 @@ def unsupervised_train(model, dataloader, optimizer, output_normalizer=None, key
         # Store losses:
         loss_dict = {keys[i]:j.item() for i,j in enumerate(all_losses_list)}
         if dyn_loss_bal:
-            loss_dict | {'balanced ' + keys[i]:j.item() for i,j in enumerate(total_losses_bal)}
+            loss_dict.update({'Unsupervised ' +i:relobralo.lam[i].item() for i in relobralo.lam.keys()})
         loss_logger.add(loss_dict)
 
         # Update model
@@ -260,3 +261,6 @@ if __name__ == '__main__':
                     model=model, 
                     loss_dict=train_logger.dictionary, 
                     optimizer=optimizer) 
+
+    # To do:
+    print(train_logger.dictionary)
