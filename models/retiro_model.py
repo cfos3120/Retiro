@@ -22,7 +22,7 @@ ACTIVATION = {'gelu':nn.GELU(),'tanh':nn.Tanh(),'sigmoid':nn.Sigmoid(),'relu':nn
     A simple MLP class, includes at least 2 layers and n hidden layers
 '''
 class MLP(nn.Module):
-    def __init__(self, n_input, n_hidden, n_output, n_layers=1, act='gelu'):
+    def __init__(self, n_input, n_hidden, n_output, n_layers=1, act='gelu', gating=False):
         super(MLP, self).__init__()
 
         if act in ACTIVATION.keys():
@@ -36,6 +36,7 @@ class MLP(nn.Module):
         self.linear_pre = nn.Linear(n_input, n_hidden)
         self.linear_post = nn.Linear(n_hidden, n_output)
         self.linears = nn.ModuleList([nn.Linear(n_hidden, n_hidden) for _ in range(n_layers)])
+        self.gating = gating
 
         # self.bns = nn.ModuleList([nn.BatchNorm1d(n_hidden) for _ in range(n_layers)])
 
@@ -325,7 +326,6 @@ class GNOT(nn.Module):
         self.__name__ = 'MIOEGPT'
 
 
-
     def _init_weights(self, module):
         if isinstance(module, (nn.Linear, nn.Embedding)):
             module.weight.data.normal_(mean=0.0, std=0.0002)
@@ -336,14 +336,13 @@ class GNOT(nn.Module):
             module.weight.data.fill_(1.0)
 
 
-
     def forward(self, x, inputs=None):
 
-        #x = pad_sequence([_g.ndata['x'] for _g in gs]).permute(1, 0, 2)  # B, T1, F
+        if self.gating:
+            pos = x[:,:,0:self.space_dim]
+        else:
+            pos = None
         
-        pos = x[:,:,0:self.space_dim]
-        
-
         # if self.horiz_fourier_dim > 0:
         #     x = horizontal_fourier_embedding(x, self.horiz_fourier_dim)
         #     z = horizontal_fourier_embedding(z, self.horiz_fourier_dim)
