@@ -302,9 +302,11 @@ class GNOT(nn.Module):
                  ffn_dropout=0.0,
                  attn_dropout=0.0,
                  horiz_fourier_dim = 0,
+                 gating = True
                  ):
         super(GNOT, self).__init__()
 
+        self.gating = gating
         self.horiz_fourier_dim = horiz_fourier_dim
         self.trunk_size = trunk_size * (4*horiz_fourier_dim + 3) if horiz_fourier_dim>0 else trunk_size
         self.branch_sizes = [bsize * (4*horiz_fourier_dim + 3) for bsize in branch_sizes] if horiz_fourier_dim > 0 else branch_sizes
