@@ -84,7 +84,7 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function, hybrid_type 
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1000)
         optimizer.step()
 
-        #break
+        break
     
     return loss_logger.aggregate()
 
@@ -138,7 +138,7 @@ def unsupervised_train(model, dataloader, optimizer, output_normalizer=None, key
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1000)
         optimizer.step()
         
-        #break
+        break
     
     return loss_logger.aggregate()
 
@@ -153,7 +153,7 @@ def validation(model, dataloader, loss_function):
             out = model(x,inputs=x_i)      
             
             val_loss += loss_function(out, y).item()
-            #break
+            break
         val_loss = val_loss/len(dataloader)
 
     return {'Validation Loss' :val_loss}
