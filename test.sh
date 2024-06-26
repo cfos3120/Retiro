@@ -9,11 +9,11 @@ sub_x=4
 seed=42
 multi_gpu=1 #(1/0 : True/False)
 
-a=(Train Monitor)  # Type of hybrid calculation
-b=(0 1)            # Initialize Weights
-c=(0 1)            # Dynamic Loss Balancing
-d=(0 100 200)      # Key only batches
-e=(0 1)            # Secondary Optimizer for Key only batches
+    a=(Train Monitor)  # Type of hybrid calculation
+    b=(0 1)            # Initialize Weights
+    c=(0 1)            # Dynamic Loss Balancing
+    d=(0 100 200)      # Key only batches
+    e=(0 1)            # Secondary Optimizer for Key only batches
 
 
 # Some of these tests do not matter, but we just want to see if the code returns any errors

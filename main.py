@@ -203,13 +203,12 @@ if __name__ == '__main__':
     if model_args['init_w']:
         model.apply(model._init_weights)
 
+    if training_args['DP']:
+       model = torch.nn.DataParallel(model)
+    
     model = wrapped_model(model=model,
                           query_normalizer=dataset.query_normalizer,
                           )
-    
-    if training_args['DP']:
-       model = torch.nn.DataParallel(model)
-
     model = model.to(device)
 
 
