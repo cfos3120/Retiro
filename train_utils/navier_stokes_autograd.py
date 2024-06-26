@@ -67,9 +67,8 @@ class wrapped_model(torch.nn.Module):
 
     def __init__(self, model, query_normalizer=None, output_normalizer=None):
         super(wrapped_model, self).__init__()
-        device = model.device
-        self.query_normalizer = query_normalizer.to(device)
-        self.output_normalizer = output_normalizer.to(device)
+        self.query_normalizer = query_normalizer
+        self.output_normalizer = output_normalizer
         self.model = model
 
     def forward(self,x,inputs):

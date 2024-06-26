@@ -207,7 +207,7 @@ if __name__ == '__main__':
        model = torch.nn.DataParallel(model)
     
     model = wrapped_model(model=model,
-                          query_normalizer=dataset.query_normalizer,
+                          query_normalizer=dataset.query_normalizer.to(device),
                           )
     model = model.to(device)
 
@@ -234,8 +234,8 @@ if __name__ == '__main__':
                                         optimizer, 
                                         loss_function = torch.nn.MSELoss(), 
                                         hybrid_type=training_args['Hybrid_type'], 
-                                        output_normalizer=dataset.output_normalizer,
-                                        keys_normalizer=dataset.input_f_normalizer,
+                                        output_normalizer=dataset.output_normalizer.to(device),
+                                        keys_normalizer=dataset.input_f_normalizer.to(device),
                                         dyn_loss_bal = training_args['dynamic_balance']
                                         )
         train_logger.update(output_log)
@@ -244,8 +244,8 @@ if __name__ == '__main__':
             output_log = unsupervised_train(model, 
                                             keys_only_train_loader, 
                                             optimizer = optimizer2 if training_args['Secondary_optimizer'] else optimizer, 
-                                            output_normalizer=dataset.output_normalizer, 
-                                            keys_normalizer=dataset.input_f_normalizer,
+                                            output_normalizer=dataset.output_normalizer.to(device), 
+                                            keys_normalizer=dataset.input_f_normalizer.to(device),
                                             dyn_loss_bal = training_args['dynamic_balance']
                                             )
             train_logger.update(output_log)
