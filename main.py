@@ -265,7 +265,7 @@ if __name__ == '__main__':
                 scheduler2.step()
             
         if training_args['eval_while_training']:
-            output_log = validation(model, val_loader, loss_function=torch.nn.MSELoss())
+            output_log = validation(model, val_loader, loss_function=loss_fn)
             train_logger.update(output_log)
 
     # Save model checkpoints
