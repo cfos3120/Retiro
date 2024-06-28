@@ -244,11 +244,11 @@ if __name__ == '__main__':
         train_logger.update(output_log)
         scheduler.step()
 
-        print(f'[Epoch{epoch:5.0f}] Loss: {output_log['Total_Loss']:.4E} \
+        print(f"[Epoch{epoch:5.0f}] Loss: {output_log['Total_Loss']:.4E} 
               Supervised Loss: {output_log['Supervised Loss']:.4E} | \
               PDE 1 (c): {output_log['PDE 1 (c)']:.4E} | \
               PDE 2 (x): {output_log['PDE 2 (x)']:.4E} | \
-              PDE 3 (y): {output_log['PDE 3 (y)']:.4E}'
+              PDE 3 (y): {output_log['PDE 3 (y)']:.4E}"
               )
         
         if training_args['Key_only_batches'] > 0:
