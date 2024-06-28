@@ -5,6 +5,7 @@ import numpy as np
 from data_utils.dataset_prep import create_loader, prepare_dataset
 from data_utils.utils import parse_arguments, get_seed
 from models.retiro_model import GNOT
+from models.old_model import CGPTNO
 from train_utils.navier_stokes_autograd import ns_pde_autograd_loss, wrapped_model
 from train_utils.dynamic_loss_balancing import RELOBRALO
 from train_utils.logging import loss_aggregator, total_loss_list, save_checkpoint
@@ -24,9 +25,7 @@ get_seed(ARGS.seed, printout=True, cudnn=False)
 seed_generator = torch.Generator().manual_seed(42)
 
 
-
-
-def hybrid_train_batch(model, dataloader, optimizer, loss_function, hybrid_type = 'Train', output_normalizer=None, keys_normalizer=None, dyn_loss_bal = False):
+def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSELoss(), hybrid_type = 'Train', output_normalizer=None, keys_normalizer=None, dyn_loss_bal = False):
     l_nu = 10 # (reynolds number multiplier L/nu * lid velocity)
 
     if hybrid_type in ['Train','Monitor']:
@@ -61,7 +60,7 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function, hybrid_type 
         # Caclulate PDE Losses
         if hybrid_type in ['Train','Monitor']:
             x_i = keys_normalizer.transform(x_i, inverse = True)  
-            pde_loss_list   = ns_pde_autograd_loss(x,out,Re=x_i*l_nu)
+            pde_loss_list   = ns_pde_autograd_loss(x,out,Re=x_i*l_nu,loss_function=loss_function)
             all_losses_list += pde_loss_list
 
         # Balance Losses
@@ -74,6 +73,7 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function, hybrid_type 
         
         # Store losses:
         loss_dict = {keys[i]:j.item() for i,j in enumerate(all_losses_list)}
+        loss_dict.update({'Total_Loss':total_losses_bal.item()})
         if dyn_loss_bal and hybrid_type == 'Train':
             loss_dict.update({i:relobralo.lam[i].item() for i in relobralo.lam.keys()})
 
@@ -83,13 +83,11 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function, hybrid_type 
         total_losses_bal.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1000)
         optimizer.step()
-
-        break
     
     return loss_logger.aggregate()
 
 
-def unsupervised_train(model, dataloader, optimizer, output_normalizer=None, keys_normalizer=None, dyn_loss_bal=False):
+def unsupervised_train(model, dataloader, optimizer, output_normalizer=None, keys_normalizer=None, dyn_loss_bal=False,loss_function=torch.nn.MSELoss()):
 
     l_nu = 10 # (reynolds number multiplier L/nu * lid velocity)
 
@@ -118,7 +116,7 @@ def unsupervised_train(model, dataloader, optimizer, output_normalizer=None, key
         
         # Caclulate PDE Losses
         x_i = keys_normalizer.transform(x_i, inverse = True)  
-        pde_loss_list   = ns_pde_autograd_loss(x,out,Re=x_i*l_nu)
+        pde_loss_list   = ns_pde_autograd_loss(x,out,Re=x_i*l_nu,loss_function=loss_function)
         all_losses_list += pde_loss_list
 
         # Balance Losses
@@ -129,6 +127,7 @@ def unsupervised_train(model, dataloader, optimizer, output_normalizer=None, key
         
         # Store losses:
         loss_dict = {keys[i]:j.item() for i,j in enumerate(all_losses_list)}
+        loss_dict.update({'Total_Loss':total_losses_bal.item()})
         if dyn_loss_bal:
             loss_dict.update({'Unsupervised ' +i:relobralo.lam[i].item() for i in relobralo.lam.keys()})
         loss_logger.add(loss_dict)
@@ -138,7 +137,6 @@ def unsupervised_train(model, dataloader, optimizer, output_normalizer=None, key
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1000)
         optimizer.step()
         
-        break
     
     return loss_logger.aggregate()
 
@@ -153,7 +151,7 @@ def validation(model, dataloader, loss_function):
             out = model(x,inputs=x_i)      
             
             val_loss += loss_function(out, y).item()
-            break
+
         val_loss = val_loss/len(dataloader)
 
     return {'Validation Loss' :val_loss}
@@ -198,7 +196,7 @@ if __name__ == '__main__':
                             )
 
     # 2. Initialize Model:
-    model = GNOT(n_experts=1)
+    model = CGPTNO() #GNOT(n_experts=1)
     
     if model_args['init_w']:
         model.apply(model._init_weights)
@@ -219,12 +217,17 @@ if __name__ == '__main__':
                                     lr=training_args['base_lr'],
                                     weight_decay=training_args['weight-decay']
                                     )
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=training_args['step_size'], gamma=0.7)
+
     if training_args['Secondary_optimizer']:
         optimizer2 = torch.optim.AdamW(model.parameters(), 
                                     betas=(0.9, 0.999), 
                                     lr=training_args['base_lr'],
                                     weight_decay=training_args['weight-decay']
                                     )
+        scheduler2 = torch.optim.lr_scheduler.StepLR(optimizer2, step_size=training_args['step_size'], gamma=0.7)
+        
+    loss_fn = 
     
     # 4. Train Epochs
     for epoch in range(training_args['epochs']):
@@ -239,6 +242,7 @@ if __name__ == '__main__':
                                         dyn_loss_bal = training_args['dynamic_balance']
                                         )
         train_logger.update(output_log)
+        scheduler.step()
         
         if training_args['Key_only_batches'] > 0:
             output_log = unsupervised_train(model, 
@@ -246,9 +250,12 @@ if __name__ == '__main__':
                                             optimizer = optimizer2 if training_args['Secondary_optimizer'] else optimizer, 
                                             output_normalizer=dataset.output_normalizer.to(device), 
                                             keys_normalizer=dataset.input_f_normalizer.to(device),
-                                            dyn_loss_bal = training_args['dynamic_balance']
+                                            dyn_loss_bal = training_args['dynamic_balance'],
+                                            loss_function=torch.nn.MSELoss()
                                             )
             train_logger.update(output_log)
+            if training_args['Secondary_optimizer']:
+                scheduler2.step()
             
         if training_args['eval_while_training']:
             output_log = validation(model, val_loader, loss_function=torch.nn.MSELoss())
