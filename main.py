@@ -227,7 +227,7 @@ if __name__ == '__main__':
                                     )
         scheduler2 = torch.optim.lr_scheduler.StepLR(optimizer2, step_size=training_args['step_size'], gamma=0.7)
         
-    loss_fn = 
+    #loss_fn = 
     
     # 4. Train Epochs
     for epoch in range(training_args['epochs']):
