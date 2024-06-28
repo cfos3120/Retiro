@@ -243,6 +243,7 @@ if __name__ == '__main__':
                                         )
         train_logger.update(output_log)
         scheduler.step()
+        print(output_log)
         
         if training_args['Key_only_batches'] > 0:
             output_log = unsupervised_train(model, 
@@ -269,4 +270,4 @@ if __name__ == '__main__':
                     optimizer=optimizer) 
 
     # To do:
-    print(train_logger.dictionary)
+    
