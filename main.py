@@ -10,7 +10,7 @@ from train_utils.navier_stokes_autograd import ns_pde_autograd_loss, wrapped_mod
 from train_utils.dynamic_loss_balancing import RELOBRALO
 from train_utils.logging import loss_aggregator, total_loss_list, save_checkpoint
 from train_utils.default_args import get_default_args, args_override 
-
+from train_utils.loss_functions import LP_custom
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -227,7 +227,7 @@ if __name__ == '__main__':
                                     )
         scheduler2 = torch.optim.lr_scheduler.StepLR(optimizer2, step_size=training_args['step_size'], gamma=0.7)
         
-    #loss_fn = 
+    loss_fn = LP_custom() #torch.nn.MSELoss()
     
     # 4. Train Epochs
     for epoch in range(training_args['epochs']):
@@ -235,7 +235,7 @@ if __name__ == '__main__':
         output_log = hybrid_train_batch(model, 
                                         train_loader, 
                                         optimizer, 
-                                        loss_function = torch.nn.MSELoss(), 
+                                        loss_function=loss_fn, 
                                         hybrid_type=training_args['Hybrid_type'], 
                                         output_normalizer=dataset.output_normalizer.to(device),
                                         keys_normalizer=dataset.input_f_normalizer.to(device),
@@ -243,6 +243,7 @@ if __name__ == '__main__':
                                         )
         train_logger.update(output_log)
         scheduler.step()
+
         print(f'[Epoch{epoch:5.0f}] Loss: {output_log['Total_Loss']:.4E} \
               Supervised Loss: {output_log['Supervised Loss']:.4E} | \
               PDE 1 (c): {output_log['PDE 1 (c)']:.4E} | \
@@ -257,7 +258,7 @@ if __name__ == '__main__':
                                             output_normalizer=dataset.output_normalizer.to(device), 
                                             keys_normalizer=dataset.input_f_normalizer.to(device),
                                             dyn_loss_bal = training_args['dynamic_balance'],
-                                            loss_function=torch.nn.MSELoss()
+                                            loss_function=loss_fn
                                             )
             train_logger.update(output_log)
             if training_args['Secondary_optimizer']:
