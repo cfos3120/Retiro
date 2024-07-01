@@ -99,9 +99,9 @@ def unsupervised_train(model, dataloader, optimizer, output_normalizer=None, key
 
     keys = ['Unsupervised PDE 1 (c)', 'Unsupervised PDE 2 (x)', 'Unsupervised PDE 3 (y)']
     loss_logger = loss_aggregator()
-    all_losses_list = []
 
     for x, x_i,__ in dataloader:
+        all_losses_list = []
         x, x_i = x.to(device), x_i.to(device)
         x.requires_grad = True
 
