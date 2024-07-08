@@ -127,7 +127,7 @@ def unsupervised_train(model, dataloader, optimizer, output_normalizer=None, key
         
         # Store losses:
         loss_dict = {keys[i]:j.item() for i,j in enumerate(all_losses_list)}
-        loss_dict.update({'Total_Loss':total_losses_bal.item()})
+        loss_dict.update({'Unsupervised Total_Loss':total_losses_bal.item()})
         if dyn_loss_bal:
             loss_dict.update({'Unsupervised ' +i:relobralo.lam[i].item() for i in relobralo.lam.keys()})
         loss_logger.add(loss_dict)
