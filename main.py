@@ -196,7 +196,8 @@ if __name__ == '__main__':
                             )
 
     # 2. Initialize Model:
-    model = CGPTNO() #GNOT(n_experts=1) # #
+    model = CGPTNO(n_layers=model_args['n_layers'],
+                   n_hidden=model_args['n_hidden']) #GNOT(n_experts=1) # #
     
     if model_args['init_w']:
         model.apply(model._init_weights)
