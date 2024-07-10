@@ -91,6 +91,7 @@ def parse_arguments():
     parser.add_argument('--epochs'      , type=int  , default=1)
     parser.add_argument('--sub_x'       , type=int  , default=8)
     parser.add_argument('--inference'   , type=int  , default=1)
+    parser.add_argument('--layers'      , type=int  , default=3)
     parser.add_argument('--n_hidden'    , type=int  , default=32)
     parser.add_argument('--train_ratio' , type=float, default=0.7)
     parser.add_argument('--seed'        , type=int  , default=42)

@@ -79,5 +79,7 @@ def args_override(dataset_args, model_args, training_args, argparser_args):
 
     model_args['init_w']            = argparser_args.init_w == 1
     model_args['gating']            = argparser_args.gating == 1
+    model_args['n_layers']          = argparser_args.layers
+    model_args['n_hidden']          = argparser_args.n_hidden  
 
     return dataset_args, model_args, training_args
