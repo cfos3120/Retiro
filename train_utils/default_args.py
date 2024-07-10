@@ -63,6 +63,7 @@ def args_override(dataset_args, model_args, training_args, argparser_args):
     dataset_args['normalize_f']     = argparser_args.normalize_f == 1
     dataset_args['inference']       = argparser_args.inference == 1
     dataset_args['train_ratio']     = argparser_args.datasplit
+    dataset_args['keys only resolution'] = argparser_args.ko_res
 
     training_args['DP']             = argparser_args.DP == 1
     training_args['Hybrid_type']    = argparser_args.Hybrid_type
