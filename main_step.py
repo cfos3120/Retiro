@@ -174,9 +174,9 @@ if __name__ == '__main__':
 
     # Override for Step Case
     dataset_args['name'] = 'Step'
-    dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\backward_facing_step_normalized.npy'
-    dataset_args['sub_x'] = 0.1
-    dataset_args['bc_input_f'] = False
+    # dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\backward_facing_step_normalized.npy'
+    # dataset_args['sub_x'] = 0.1
+    # dataset_args['bc_input_f'] = False
 
     # 1. Dataset Preperations:
     dataset = prepare_dataset(dataset_args, unsupervised=False)
