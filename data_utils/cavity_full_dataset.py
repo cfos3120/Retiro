@@ -45,7 +45,7 @@ class Cavity_2D_dataset_for_GNOT():
         self.normalize_y = normalize_y
         self.normalize_x = normalize_x
         self.normalize_f = normalize_f
-        self.sub_x = sub_x
+        self.sub_x = int(sub_x)
         self.vertex = vertex
         self.boundaries = boundaries
 

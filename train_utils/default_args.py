@@ -3,6 +3,7 @@
 def get_default_args():
     
     dataset_args = dict()
+    dataset_args['name']        = 'Cavity'
     dataset_args['L']           = 1.0
     dataset_args['sub_x']       = 8
     dataset_args['normalize_y'] = True
@@ -19,6 +20,7 @@ def get_default_args():
     dataset_args['keys only resolution'] = 32
     dataset_args['key_range_min'] = 1.0
     dataset_args['key_range_max'] = 100.0
+    dataset_args['bc_input_f']    = False # For Step
 
     model_args = dict()
     model_args['trunk_size']        = 2

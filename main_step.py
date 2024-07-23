@@ -7,10 +7,12 @@ from data_utils.utils import parse_arguments, get_seed
 from models.retiro_model import GNOT
 from models.old_model import CGPTNO
 from train_utils.navier_stokes_autograd import ns_pde_autograd_loss, wrapped_model
+from train_utils.boundary_conditions import bc_loss
 from train_utils.dynamic_loss_balancing import RELOBRALO
 from train_utils.logging import loss_aggregator, total_loss_list, save_checkpoint
 from train_utils.default_args import get_default_args, args_override 
 from train_utils.loss_functions import LP_custom
+from data_utils.utils import UnitTransformer, MultipleTensors
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -36,15 +38,13 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSEL
     if dyn_loss_bal and hybrid_type == 'Train': 
         relobralo = RELOBRALO(device=device) 
 
-    keys = ['Supervised Loss', 'PDE 1 (c)', 'PDE 2 (x)', 'PDE 3 (y)']
+    keys = ['Supervised Loss', 'PDE 1 (c)', 'PDE 2 (x)', 'PDE 3 (y)', 'BC (D)', 'BC (VN)']
     loss_logger = loss_aggregator()
 
-    for x, x_i, y,__ in dataloader:
+    for x, x_i, y, index in dataloader:
+        #x, x_i, y = x.to(device), MultipleTensors(x_i).to(device), y.to(device)
         x, x_i, y = x.to(device), x_i.to(device), y.to(device)
         x.requires_grad = True
-        
-        print(x.shape, x_i.shape, y.shape)
-        # print(x.dtype, x_i.dtype, y.dtype)
 
         optimizer.zero_grad()
         all_losses_list = []
@@ -60,11 +60,17 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSEL
         if model.output_normalizer is None:
             out = output_normalizer.transform(out, inverse = True)          
         
-        # Caclulate PDE Losses
+        # Caclulate PDE and BC Losses
         if hybrid_type in ['Train','Monitor']:
+
+            # PDE
             x_i = keys_normalizer.transform(x_i, inverse = True)  
-            pde_loss_list,__   = ns_pde_autograd_loss(x,out,Re=x_i*l_nu,loss_function=loss_function)
+            pde_loss_list, derivatives = ns_pde_autograd_loss(x,out,Re=x_i*l_nu,loss_function=loss_function)
             all_losses_list += pde_loss_list
+
+            # BC (von Neumann and Dirichlet)
+            bc_loss_list = bc_loss(out,y,bc_index=index['Boundary Indices'],derivatives=derivatives,loss_function=loss_function)
+            all_losses_list += bc_loss_list
 
         # Balance Losses
         if dyn_loss_bal and hybrid_type == 'Train':    
@@ -119,7 +125,7 @@ def unsupervised_train(model, dataloader, optimizer, output_normalizer=None, key
         
         # Caclulate PDE Losses
         x_i = keys_normalizer.transform(x_i, inverse = True)  
-        pde_loss_list,__    = ns_pde_autograd_loss(x,out,Re=x_i*l_nu,loss_function=loss_function)
+        pde_loss_list   = ns_pde_autograd_loss(x,out,Re=x_i*l_nu,loss_function=loss_function)
         all_losses_list += pde_loss_list
 
         # Balance Losses
@@ -160,13 +166,17 @@ def validation(model, dataloader, loss_function):
     return {'Validation Loss' :val_loss}
 
 
-
 if __name__ == '__main__':
 
     # 0. Get Arguments 
     dataset_args, model_args, training_args = get_default_args()
     dataset_args, model_args, training_args = args_override(dataset_args, model_args, training_args, ARGS)
 
+    # Override for Step Case
+    dataset_args['name'] = 'Step'
+    dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\backward_facing_step_normalized.npy'
+    dataset_args['sub_x'] = 0.1
+    dataset_args['bc_input_f'] = False
 
     # 1. Dataset Preperations:
     dataset = prepare_dataset(dataset_args, unsupervised=False)
@@ -199,9 +209,10 @@ if __name__ == '__main__':
                             )
 
     # 2. Initialize Model:
-    model = CGPTNO(n_layers=model_args['n_layers'],
-                   n_hidden=model_args['n_hidden']) #GNOT(n_experts=1) # #
-    
+    model = CGPTNO(branch_sizes=torch_dataset.config['branch_sizes'],
+                    n_layers=model_args['n_layers'],
+                    n_hidden=model_args['n_hidden']) #GNOT(n_experts=1) # #
+
     if model_args['init_w']:
         model.apply(model._init_weights)
 
@@ -209,7 +220,7 @@ if __name__ == '__main__':
        model = torch.nn.DataParallel(model)
     
     model = wrapped_model(model=model,
-                          query_normalizer=dataset.query_normalizer.to(device),
+                          query_normalizer=dataset.x_normalizer.to(device),
                           )
     model = model.to(device)
 
@@ -241,8 +252,8 @@ if __name__ == '__main__':
                                         optimizer, 
                                         loss_function=loss_fn, 
                                         hybrid_type=training_args['Hybrid_type'], 
-                                        output_normalizer=dataset.output_normalizer.to(device),
-                                        keys_normalizer=dataset.input_f_normalizer.to(device),
+                                        output_normalizer=dataset.y_normalizer.to(device),
+                                        keys_normalizer=dataset.xi_normalizer.to(device),
                                         dyn_loss_bal = training_args['dynamic_balance']
                                         )
         train_logger.update(output_log)
@@ -252,15 +263,17 @@ if __name__ == '__main__':
               f"Supervised Loss: {output_log['Supervised Loss']:.4E} | " + \
               f"PDE 1 (c): {output_log['PDE 1 (c)']:.4E} | " + \
               f"PDE 2 (x): {output_log['PDE 2 (x)']:.4E} | " + \
-              f"PDE 3 (y): {output_log['PDE 3 (y)']:.4E}"
+              f"PDE 3 (y): {output_log['PDE 3 (y)']:.4E} | " + \
+              f"BC (D): {output_log['BC (D)']:.4E} | " + \
+              f"BC (VN): {output_log['BC (VN)']:.4E}"
               )
         
         if training_args['Key_only_batches'] > 0:
             output_log = unsupervised_train(model, 
                                             keys_only_train_loader, 
                                             optimizer = optimizer2 if training_args['Secondary_optimizer'] else optimizer, 
-                                            output_normalizer=dataset.output_normalizer.to(device), 
-                                            keys_normalizer=dataset.input_f_normalizer.to(device),
+                                            output_normalizer=dataset.y_normalizer.to(device), 
+                                            keys_normalizer=dataset.xi_normalizer.to(device),
                                             dyn_loss_bal = training_args['dynamic_balance'],
                                             loss_function=loss_fn
                                             )
@@ -279,5 +292,4 @@ if __name__ == '__main__':
                     loss_dict=train_logger.dictionary, 
                     optimizer=optimizer) 
 
-    # To do:
     

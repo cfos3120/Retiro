@@ -283,6 +283,8 @@ class CGPTNO(nn.Module):
                  ):
         super(CGPTNO, self).__init__()
 
+        assert branch_sizes == [1], 'Multi-Input Functions not supported by this model'
+        
         self.horiz_fourier_dim = horiz_fourier_dim
         self.trunk_size = trunk_size * (4*horiz_fourier_dim + 3) if horiz_fourier_dim>0 else trunk_size
         # self.branch_sizes = [bsize * (4*horiz_fourier_dim + 3) for bsize in branch_sizes] if horiz_fourier_dim > 0 else branch_sizes
@@ -372,7 +374,6 @@ class CGPTNO(nn.Module):
         return optimizer
 
     def forward(self, x, u_p=None, inputs=None):
-
         #gs = dgl.unbatch(g)
         #x = pad_sequence([_g.ndata['x'] for _g in gs]).permute(1, 0, 2)  # B, T1, F
         if u_p is not None:
@@ -380,6 +381,8 @@ class CGPTNO(nn.Module):
         if self.horiz_fourier_dim > 0:
             x = horizontal_fourier_embedding(x, self.horiz_fourier_dim)
             # z = horizontal_fourier_embedding(z, self.horiz_fourier_dim)
+            
+    
         x = self.trunk_mlp(x)
         if self.n_inputs:
             z = MultipleTensors([self.branch_mlps[i](inputs) for i in range(self.n_inputs)])

@@ -48,14 +48,14 @@ def ns_pde_autograd(model_input_coords, model_out, Re):
 # Loss Function application and construction function
 def ns_pde_autograd_loss(model_input_coords, model_out, Re, loss_function=torch.nn.MSELoss()):
 
-    pde_eqns,__ = ns_pde_autograd(model_input_coords, model_out, Re)
-    
+    pde_eqns, derivatives = ns_pde_autograd(model_input_coords, model_out, Re)
+
     loss_list = list()
     for pde_eqn in pde_eqns:
         pde_loss = loss_function(pde_eqn,torch.zeros_like(pde_eqn))
         loss_list.append(pde_loss)
 
-    return loss_list
+    return loss_list, derivatives
 
 # For Autograd to work well we need to wrap the model to include input normalization
 class wrapped_model(torch.nn.Module):
@@ -72,13 +72,14 @@ class wrapped_model(torch.nn.Module):
         self.model = model
 
     def forward(self,x,inputs):
+        
         if self.query_normalizer is not None:
-            x = self.query_normalizer.transform(x, inverse=False)
+            x = self.query_normalizer.transform(x, inverse=False).float()
         
         out = self.model(x,inputs=inputs)
 
         if self.output_normalizer is not None:
-            out = self.output_normalizer.transform(out, inverse=True)
+            out = self.output_normalizer.transform(out, inverse=True).float()
 
         return out
 

@@ -1,31 +1,50 @@
-from .full_dataset import Cavity_2D_dataset_for_GNOT, CavityDataset
-from .keys_only_dataset import unsupervised_Cavity_dataset_for_GNOT, unsupervised_CavityDataset
+from .cavity_full_dataset import Cavity_2D_dataset_for_GNOT, CavityDataset
+from .cavity_keys_only_dataset import unsupervised_Cavity_dataset_for_GNOT, unsupervised_CavityDataset
+
+from .step_full_dataset import Step_2D_dataset_for_GNOT, StepDataset
+from .step_keys_only_dataset import unsupervised_Step_dataset_for_GNOT, unsupervised_StepDataset
 
 def prepare_dataset(args, unsupervised=False, reference_data_set=None):
-    if unsupervised:
-        torch_dataset = unsupervised_Cavity_dataset_for_GNOT(key_range_min = args['key_range_min'], 
-                                                      key_range_max = args['key_range_max'],
-                                                      key_range_interval = 1,
-                                                      L=args['L'],
-                                                      resolution = args['keys only resolution'],
-                                                      normalize_y=args['normalize_y'], 
-                                                      normalize_x=args['normalize_x'], 
-                                                      normalize_f=args['normalize_f'], 
-                                                      vertex = args['vertex'],
-                                                      boundaries=args['boundaries'],
-                                                      reference_data_set=reference_data_set
-                                                      )
-    else:
-        torch_dataset = Cavity_2D_dataset_for_GNOT(data_path=args['file_path'], 
-                                                    L=args['L'], 
-                                                    sub_x=args['sub_x'], 
-                                                    normalize_y=args['normalize_y'], 
-                                                    normalize_x=args['normalize_x'], 
-                                                    normalize_f=args['normalize_f'], 
-                                                    vertex=args['vertex'], 
-                                                    boundaries=args['boundaries']
-                                                    )
+    
+    # need to add cavity or step option here:
+
+    if args['name'] == 'Cavity':
+        if unsupervised:
+            torch_dataset = unsupervised_Cavity_dataset_for_GNOT(key_range_min = args['key_range_min'], 
+                                                        key_range_max = args['key_range_max'],
+                                                        key_range_interval = 1,
+                                                        L=args['L'],
+                                                        resolution = args['keys only resolution'],
+                                                        normalize_y=args['normalize_y'], 
+                                                        normalize_x=args['normalize_x'], 
+                                                        normalize_f=args['normalize_f'], 
+                                                        vertex = args['vertex'],
+                                                        boundaries=args['boundaries'],
+                                                        reference_data_set=reference_data_set
+                                                        )
+        else:
+            torch_dataset = Cavity_2D_dataset_for_GNOT(data_path=args['file_path'], 
+                                                        L=args['L'], 
+                                                        sub_x=args['sub_x'], # needs to be a factor
+                                                        normalize_y=args['normalize_y'], 
+                                                        normalize_x=args['normalize_x'], 
+                                                        normalize_f=args['normalize_f'], 
+                                                        vertex=args['vertex'], 
+                                                        boundaries=args['boundaries']
+                                                        )
+    
+    elif args['name'] == 'Step':
+        torch_dataset = Step_2D_dataset_for_GNOT(data_path=args['file_path'],
+                                                        subsample_ratio=args['sub_x'], # needs to be a percentage
+                                                        normalize_y=args['normalize_y'], 
+                                                        normalize_x=args['normalize_x'], 
+                                                        normalize_f=args['normalize_f'], 
+                                                        boundary_input_f=args['bc_input_f']
+                                                        )
+        
     return torch_dataset
+        
+
 
 def create_loader(dataset, args):
     if dataset.__class__.__name__ == 'Cavity_2D_dataset_for_GNOT':
@@ -38,11 +57,19 @@ def create_loader(dataset, args):
 
     elif dataset.__class__.__name__  == 'unsupervised_Cavity_dataset_for_GNOT':
         dataloader = unsupervised_CavityDataset(dataset=dataset,random_coords = args['random_coords'])
-    else:
-        raise NotImplementedError('dataset has to be of object type "Cavity_2D_dataset_for_GNOT" or "unsupervised_Cavity_dataset_for_GNOT"')
-    
-    return dataloader
 
+    elif dataset.__class__.__name__ == 'Step_2D_dataset_for_GNOT':
+        dataloader = StepDataset(dataset=dataset,
+                                   train=args['train'], 
+                                   inference=args['inference'],
+                                   train_ratio=args['train_ratio'], 
+                                   seed=args['seed'], 
+                                   random_coords = args['random_coords'])
+    else:
+        raise NotImplementedError('dataset is not supported')
+    
+    dataloader.config = dataset.config
+    return dataloader
 
 # Testing function
 if __name__ == '__main__':

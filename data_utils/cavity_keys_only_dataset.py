@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset
 from .utils import UnitTransformer
-from .full_dataset import get_query_grid, create_a_normalizer
+from .cavity_full_dataset import get_query_grid, create_a_normalizer
 
 class unsupervised_Cavity_dataset_for_GNOT():
     def __init__(self,  
@@ -20,7 +20,7 @@ class unsupervised_Cavity_dataset_for_GNOT():
 
         print('\n Creating Keys Only Dataset')
 
-    # Normalizer settings:
+        # Normalizer settings:
         self.normalize_y = normalize_y
         self.normalize_x = normalize_x
         self.normalize_f = normalize_f
