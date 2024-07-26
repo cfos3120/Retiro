@@ -8,7 +8,7 @@ def prepare_dataset(args, unsupervised=False, reference_data_set=None):
     
     # need to add cavity or step option here:
 
-    if args['name'] == 'Cavity':
+    if args['name'] == 'Cavity (old Method)':
         if unsupervised:
             torch_dataset = unsupervised_Cavity_dataset_for_GNOT(key_range_min = args['key_range_min'], 
                                                         key_range_max = args['key_range_max'],
@@ -33,7 +33,7 @@ def prepare_dataset(args, unsupervised=False, reference_data_set=None):
                                                         boundaries=args['boundaries']
                                                         )
     
-    elif args['name'] == 'Step':
+    else:
         torch_dataset = Step_2D_dataset_for_GNOT(data_path=args['file_path'],
                                                         subsample_ratio=args['sub_x'], # needs to be a percentage
                                                         normalize_y=args['normalize_y'], 

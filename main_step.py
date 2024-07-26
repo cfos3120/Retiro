@@ -19,6 +19,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 global ARGS 
 ARGS = parse_arguments()
 
+
 torch.manual_seed(ARGS.seed)
 torch.cuda.manual_seed(ARGS.seed)
 np.random.seed(ARGS.seed)
@@ -173,9 +174,10 @@ if __name__ == '__main__':
     dataset_args, model_args, training_args = args_override(dataset_args, model_args, training_args, ARGS)
 
     # Override for Step Case
-    dataset_args['name'] = 'Step'
-    # dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\backward_facing_step_normalized.npy'
-    # dataset_args['sub_x'] = 0.1
+    #dataset_args['name'] = 'Step'
+    dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\backward_facing_step_normalized.npy'
+    dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\cavity_with_bc_normalized.npy'
+    dataset_args['sub_x'] = 0.001
     # dataset_args['bc_input_f'] = False
 
     # 1. Dataset Preperations:
