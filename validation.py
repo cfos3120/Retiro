@@ -22,7 +22,7 @@ parser.add_argument('--sub_x'       , type=float, default=8)
 parser.add_argument('--seed'        , type=int  , default=42)
 parser.add_argument('--rand_cood'   , type=int  , default=1)
 parser.add_argument('--case_path'   , type=str  , default='None')
-parser.add_argument('--name'        , type=str  , default='test')
+parser.add_argument('--data_name'        , type=str  , default='test')
 
 ARGS = parser.parse_args()
 
