@@ -16,7 +16,7 @@ from argparse import ArgumentParser
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
  
-parser = ArgumentParser(description='GNOT (retiro) Artemis Training Study')
+parser = ArgumentParser(description='GNOT (retiro) Artemis L2 Validation Study')
 parser.add_argument('--data_path'   , type=str  , default= r'C:\Users\Noahc\Documents\USYD\PHD\8 - Github\GNOT\data\steady_cavity_case_b200_maxU100ms_simple_normalized.npy')
 parser.add_argument('--sub_x'       , type=float, default=8)
 parser.add_argument('--seed'        , type=int  , default=42)
@@ -120,7 +120,7 @@ if __name__ == '__main__':
             pde_loss_list, derivatives = ns_pde_autograd_loss(x,out,Re=x_i,loss_function=loss_fn_2)
 
             # BC (von Neumann and Dirichlet)
-            bc_loss_list = bc_loss(out,y,bc_index=index['Boundary Indices'],derivatives=derivatives,loss_function=loss_fn_2)
+            bc_loss_list = bc_loss(out,y,bc_index=index['Boundary Indices'],derivatives=derivatives,loss_function=loss_fn_2,ARGS=ARGS)
 
             loss_dict = {'Re Number' : round(x_i.flatten().item(),2),
                         'L2 Rel Loss' : supervised_loss.item(),

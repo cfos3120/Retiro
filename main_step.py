@@ -69,7 +69,7 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSEL
             all_losses_list += pde_loss_list
 
             # BC (von Neumann and Dirichlet)
-            bc_loss_list = bc_loss(out,y,bc_index=index['Boundary Indices'],derivatives=derivatives,loss_function=loss_function)
+            bc_loss_list = bc_loss(out,y,bc_index=index['Boundary Indices'],derivatives=derivatives,loss_function=loss_function,ARGS=ARGS)
             all_losses_list += bc_loss_list
 
         # Balance Losses

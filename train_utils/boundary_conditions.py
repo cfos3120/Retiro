@@ -2,7 +2,7 @@ from data_utils.utils import parse_arguments
 import numpy as np
 import torch
 
-ARGS = parse_arguments()
+#ARGS = parse_arguments()
 
 boundary_mapping = {'Cavity' :{
                         'D_BC' : {
@@ -33,7 +33,7 @@ boundary_mapping = {'Cavity' :{
 
 
 
-def bc_loss(model_y,y,bc_index,derivatives, loss_function):
+def bc_loss(model_y,y,bc_index,derivatives, loss_function, ARGS):
 
     # Dirichlet Boundary Conditions
     # Easiest way is to just compare to existing solution at boundary
