@@ -48,7 +48,7 @@ if __name__ == '__main__':
     #dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\backward_facing_step_normalized.npy'
     #dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\cavity_with_bc_normalized.npy'
     
-    dataset_args['rand_cood'] = ARGS.random_coords == 1
+    dataset_args['rand_cood'] = ARGS.rand_cood == 1
     dataset_args['file_path'] = ARGS.data_path
     dataset_args['sub_x'] = ARGS.sub_x
 
