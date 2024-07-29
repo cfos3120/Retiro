@@ -82,5 +82,19 @@ class wrapped_model(torch.nn.Module):
             out = self.output_normalizer.transform(out, inverse=True).float()
 
         return out
+    
+    def load_ckpt(self, ckpt):
+        new_ckpt = ckpt.copy()
+        for key in ckpt:
 
+            if key[:12] == 'model.module':
+                new_key = f'model{key[12:]}'
+            
+                new_ckpt[new_key] = new_ckpt.pop(key)
+
+        wrapped_checkpoint_item = new_ckpt
+        self.load_state_dict(wrapped_checkpoint_item)
+
+        print(r'Checkpoint Loaded')
+    
 

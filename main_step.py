@@ -29,7 +29,6 @@ seed_generator = torch.Generator().manual_seed(42)
 
 
 def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSELoss(), hybrid_type = 'Train', output_normalizer=None, keys_normalizer=None, dyn_loss_bal = False):
-    l_nu = 10 # (reynolds number multiplier L/nu * lid velocity)
 
     if hybrid_type in ['Train','Monitor']:
         assert (model.output_normalizer is not None or output_normalizer is not None), \
@@ -66,7 +65,7 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSEL
 
             # PDE
             x_i = keys_normalizer.transform(x_i, inverse = True)  
-            pde_loss_list, derivatives = ns_pde_autograd_loss(x,out,Re=x_i*l_nu,loss_function=loss_function)
+            pde_loss_list, derivatives = ns_pde_autograd_loss(x,out,Re=x_i,loss_function=loss_function)
             all_losses_list += pde_loss_list
 
             # BC (von Neumann and Dirichlet)
