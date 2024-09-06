@@ -14,7 +14,8 @@ from train_utils.loss_functions import LP_custom
 
 from argparse import ArgumentParser
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu") # Not as quick but might get around memory allocation issues
  
 parser = ArgumentParser(description='GNOT (retiro) Artemis L2 Validation Study')
 parser.add_argument('--data_path'   , type=str  , default= r'C:\Users\Noahc\Documents\USYD\PHD\8 - Github\GNOT\data\steady_cavity_case_b200_maxU100ms_simple_normalized.npy')

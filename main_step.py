@@ -72,6 +72,10 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSEL
             bc_loss_list = bc_loss(out,y,bc_index=index['Boundary Indices'],derivatives=derivatives,loss_function=loss_function,ARGS=ARGS)
             all_losses_list += bc_loss_list
 
+            # if if hybrid_type == 'Monitor':
+                # we need to clear the gradients accumulated in this pass
+                # it is automatically cleared when trained, but when monitored these build up.
+
         # Balance Losses
         if dyn_loss_bal and hybrid_type == 'Train':    
             total_losses_bal = relobralo(loss_list=all_losses_list)         # Dynamic Balance Losses
