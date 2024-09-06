@@ -72,7 +72,9 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSEL
             bc_loss_list = bc_loss(out,y,bc_index=index['Boundary Indices'],derivatives=derivatives,loss_function=loss_function,ARGS=ARGS)
             all_losses_list += bc_loss_list
 
-            # if if hybrid_type == 'Monitor':
+            if hybrid_type == 'Monitor':
+                for pde_n in pde_loss_list + bc_loss_list:
+                    pde_n.grad = None
                 # we need to clear the gradients accumulated in this pass
                 # it is automatically cleared when trained, but when monitored these build up.
 
