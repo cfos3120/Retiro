@@ -76,7 +76,7 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSEL
                 for pde_n in pde_loss_list + bc_loss_list:
                     pde_n.grad = None
                 for pde_d_n in derivatives:
-                    pde_n.grad = None
+                    pde_d_n.grad = None
                 # we need to clear the gradients accumulated in this pass
                 # it is automatically cleared when trained, but when monitored these build up.
 
