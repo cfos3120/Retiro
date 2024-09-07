@@ -41,12 +41,12 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSEL
     keys = ['Supervised Loss', 'PDE 1 (c)', 'PDE 2 (x)', 'PDE 3 (y)', 'BC (D)', 'BC (VN)']
     loss_logger = loss_aggregator()
 
+    batch_n = 0
     for x, x_i, y, index in dataloader:
         #x, x_i, y = x.to(device), MultipleTensors(x_i).to(device), y.to(device)
         x, x_i, y = x.to(device), x_i.to(device), y.to(device)
         x.requires_grad = True
 
-        optimizer.zero_grad()
         all_losses_list = []
         
         # infer model
@@ -75,6 +75,8 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSEL
             if hybrid_type == 'Monitor':
                 for pde_n in pde_loss_list + bc_loss_list:
                     pde_n.grad = None
+                for pde_d_n in derivatives:
+                    pde_n.grad = None
                 # we need to clear the gradients accumulated in this pass
                 # it is automatically cleared when trained, but when monitored these build up.
 
@@ -98,7 +100,11 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSEL
         total_losses_bal.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1000)
         optimizer.step()
-    
+        optimizer.zero_grad()
+
+        batch_n += 1
+        print(f'batch: {batch_n} | reserved {torch.cuda.memory_reserved(0)} | allocated {torch.cuda.memory_allocated(0)}')
+
     return loss_logger.aggregate()
 
 
