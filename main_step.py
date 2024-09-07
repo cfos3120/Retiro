@@ -85,6 +85,8 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSEL
             total_losses_bal = relobralo(loss_list=all_losses_list)         # Dynamic Balance Losses
         elif hybrid_type == 'Train':               
             total_losses_bal = sum(all_losses_list)/len(all_losses_list)    # Simply Mean Losses
+        elif hybrid_type == 'Monitor':
+            total_losses_bal = supervised_loss + 0*torch.sum(pde_loss_list) +  0*torch.sum(bc_loss_list)
         else:
             total_losses_bal = supervised_loss                              # Only backwards bass supervised loss
         
