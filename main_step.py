@@ -96,8 +96,8 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSEL
         optimizer.step()
         optimizer.zero_grad()
 
-        batch_n += 1
-        print(f'batch: {batch_n} | reserved {torch.cuda.memory_reserved(0)} | allocated {torch.cuda.memory_allocated(0)}')
+        # batch_n += 1
+        # print(f'batch: {batch_n} | reserved {torch.cuda.memory_reserved(0)} | allocated {torch.cuda.memory_allocated(0)}')
 
     return loss_logger.aggregate()
 
