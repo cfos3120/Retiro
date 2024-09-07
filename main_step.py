@@ -72,21 +72,13 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSEL
             bc_loss_list = bc_loss(out,y,bc_index=index['Boundary Indices'],derivatives=derivatives,loss_function=loss_function,ARGS=ARGS)
             all_losses_list += bc_loss_list
 
-            if hybrid_type == 'Monitor':
-                for pde_n in pde_loss_list + bc_loss_list:
-                    pde_n.grad = None
-                for pde_d_n in derivatives:
-                    derivatives[pde_d_n].grad = None
-                # we need to clear the gradients accumulated in this pass
-                # it is automatically cleared when trained, but when monitored these build up.
-
         # Balance Losses
         if dyn_loss_bal and hybrid_type == 'Train':    
             total_losses_bal = relobralo(loss_list=all_losses_list)         # Dynamic Balance Losses
         elif hybrid_type == 'Train':               
             total_losses_bal = sum(all_losses_list)/len(all_losses_list)    # Simply Mean Losses
-        elif hybrid_type == 'Monitor':
-            total_losses_bal = supervised_loss + 0*sum(pde_loss_list) +  0*sum(bc_loss_list)
+        elif hybrid_type == 'Monitor':                                      
+            total_losses_bal = supervised_loss + 0*sum(pde_loss_list) +  0*sum(bc_loss_list) # for some reason, only this zeros the gradients
         else:
             total_losses_bal = supervised_loss                              # Only backwards bass supervised loss
         
