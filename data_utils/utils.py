@@ -106,12 +106,15 @@ def parse_arguments():
     parser.add_argument('--step_size'   , type=int  , default=50)
     parser.add_argument('--init_w'      , type=int  , default=0)
     parser.add_argument('--datasplit'   , type=float, default=0.7)
-    parser.add_argument('--ckpt_path'   , type=str  , default='None')
     parser.add_argument('--gating'      , type=int  , default=0)
     parser.add_argument('--Key_only_batches'      , type=int  , default=0)
     parser.add_argument('--Secondary_optimizer'   , type=int  , default=0)
     parser.add_argument('--dynamic_balance'   , type=int  , default=0)
     parser.add_argument('--ko_res'      , type=int  , default=32)
     parser.add_argument('--data_name'    , type=str  , default='test')
+
+    # for fine-tunings
+    parser.add_argument('--case_n'    , type=int  , default=0)
+    parser.add_argument('--ckpt_path'    , type=str  , default=r'C:\Users\Noahc\Documents\USYD\PHD\0 - Work Space\analytics_v2_Retiro\test_aTrain_b0_c1_d0.8_h0.7') #no extension (this is added later)
 
     return parser.parse_args()

@@ -35,9 +35,6 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSEL
             'Output normalizer needs to be defined in function if Wrapped model does not feature output normalizer in forward()'
         assert keys_normalizer is not None, 'Keys need to be un-normalized for PDE calculation'
 
-    if dyn_loss_bal and hybrid_type == 'Train': 
-        relobralo = RELOBRALO(device=device) 
-
     keys = ['Supervised Loss', 'PDE 1 (c)', 'PDE 2 (x)', 'PDE 3 (y)', 'BC (D)', 'BC (VN)']
     loss_logger = loss_aggregator()
 
@@ -240,7 +237,9 @@ if __name__ == '__main__':
                                     weight_decay=training_args['weight-decay']
                                     )
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=training_args['step_size'], gamma=0.7)
-
+    if training_args['dynamic_balance'] and training_args['Hybrid_type'] == 'Train': 
+        relobralo = RELOBRALO(device=device) 
+    
     if training_args['Secondary_optimizer']:
         optimizer2 = torch.optim.AdamW(model.parameters(), 
                                     betas=(0.9, 0.999), 

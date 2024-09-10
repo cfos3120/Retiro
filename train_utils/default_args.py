@@ -53,6 +53,9 @@ def get_default_args():
     training_args['eval_while_training']    = True
     training_args['dynamic_balance']        = False
 
+    # for fine-tuning
+    training_args['case_n']                 = 0
+
     return dataset_args, model_args, training_args
 
 
@@ -80,10 +83,14 @@ def args_override(dataset_args, model_args, training_args, argparser_args):
     training_args['Key_only_batches'] = argparser_args.Key_only_batches
     training_args['Secondary_optimizer'] = argparser_args.Secondary_optimizer == 1
     training_args['dynamic_balance'] = argparser_args.dynamic_balance == 1
+    
+    # for fine-tuning   
+    training_args['case_n'] = argparser_args.case_n
 
     model_args['init_w']            = argparser_args.init_w == 1
     model_args['gating']            = argparser_args.gating == 1
     model_args['n_layers']          = argparser_args.layers
     model_args['n_hidden']          = argparser_args.n_hidden  
+    model_args['ckpt_path']         = argparser_args.ckpt_path
 
     return dataset_args, model_args, training_args
