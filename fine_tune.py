@@ -186,8 +186,9 @@ if __name__ == '__main__':# 0. Get Arguments
         if (epoch+1) % (training_args['epochs']/4) == 0:
             intermediate_results[intermediate_results_index, ...] = solution
 
-    intermediate_results_list['intermediate_results'] = intermediate_results
+    intermediate_results_list['solutions'] = intermediate_results
     intermediate_results_list['coordinates'] = batch[0]
+    train_logger.dictionary['intermediate_results'] = intermediate_results_list
 
     # Save model checkpoints
     save_checkpoint(training_args["save_dir"], 
