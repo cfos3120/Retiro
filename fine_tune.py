@@ -156,7 +156,7 @@ if __name__ == '__main__':# 0. Get Arguments
 
     loss_fn = Linf_custom() #LP_custom() #torch.nn.MSELoss()
     
-    intermediate_results = np.empty((4,batch[3].shape[-2], batch[3].shape[-1]))
+    intermediate_results = np.empty((4,batch[2].shape[-2], batch[2].shape[-1]))
     intermediate_results_list = dict()
     intermediate_results_index = 0
 
