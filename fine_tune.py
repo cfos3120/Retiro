@@ -12,7 +12,7 @@ from train_utils.boundary_conditions import bc_loss
 from train_utils.dynamic_loss_balancing import RELOBRALO
 from train_utils.logging import loss_aggregator, total_loss_list, save_checkpoint
 from train_utils.default_args import get_default_args, args_override 
-from train_utils.loss_functions import LP_custom
+from train_utils.loss_functions import LP_custom, Linf_custom
 from data_utils.utils import UnitTransformer, MultipleTensors
 from data_utils.cavity_isotropic_subsampler import cavity_isotropic_subsampler
 
@@ -154,7 +154,7 @@ if __name__ == '__main__':# 0. Get Arguments
                                                         )
     relobralo = RELOBRALO(device=device)
 
-    loss_fn = LP_custom() #torch.nn.MSELoss()
+    loss_fn = Linf_custom() #LP_custom() #torch.nn.MSELoss()
     
     intermediate_results = np.empty((4,batch[3].shape[-2], batch[3].shape[-1]))
     intermediate_results_list = dict()

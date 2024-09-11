@@ -22,3 +22,15 @@ class LP_custom(object):
             losses = (self.avg_pool((x.abs() ** 2)) + 1e-8) ** (1 / 2)
         loss = losses.mean()
         return loss
+    
+class Linf_custom(object):
+    def __init__(self):
+        super(Linf_custom, self).__init__()
+    
+    def __call__(self, x, y=None):
+
+        if y is not None:
+            loss = torch.max(torch.abs(x - y))
+        else:
+            loss = torch.max(torch.abs(x))
+        return loss
