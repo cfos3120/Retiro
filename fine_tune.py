@@ -156,7 +156,7 @@ if __name__ == '__main__':# 0. Get Arguments
 
     loss_fn = Linf_custom() #LP_custom() #torch.nn.MSELoss()
     
-    intermediate_results = np.empty((4,batch[2].shape[-2], batch[2].shape[-1]))
+    intermediate_results = np.zeros((4,batch[2].shape[-2], batch[2].shape[-1]))
     intermediate_results_list = dict()
     intermediate_results_index = 0
 
@@ -184,7 +184,7 @@ if __name__ == '__main__':# 0. Get Arguments
               )
         
         if (epoch+1) % (training_args['epochs']/4) == 0:
-            intermediate_results[intermediate_results_index, ...] = solution
+            intermediate_results[intermediate_results_index, ...] = solution # this appears to only work for the first time?
 
     intermediate_results_list['solutions'] = intermediate_results
     intermediate_results_list['coordinates'] = batch[0]

@@ -66,14 +66,14 @@ class Step_2D_dataset_for_GNOT():
 
         # Normalize if required
         if self.normalize_x:
-            self.queries = self.x_normalizer.transform(self.x, inverse=False)
+            self.x = self.x_normalizer.transform(self.x, inverse=False)
             print(f'    Queries Normalized with Means: {self.x_normalizer.mean} and Stds: {self.x_normalizer.std}')
             if boundary_input_f:
                 self.bc['Coords'] = self.x_normalizer.transform(self.bc['Coords'], inverse=False)
                 print(f'    BC coords Keys Normalized with Means: {self.x_normalizer.mean} and Stds: {self.x_normalizer.std}')
 
         if self.normalize_y:
-            self.data_out = self.y_normalizer.transform(self.y, inverse=False)
+            self.y = self.y_normalizer.transform(self.y, inverse=False)
             print(f'    Solutions Normalized with Means: {self.y_normalizer.mean} and Stds: {self.y_normalizer.std}')
             if boundary_input_f:
                 self.bc['Values'] = self.y_normalizer.transform(self.bc['Values'], inverse=False)
