@@ -129,7 +129,7 @@ if __name__ == '__main__':# 0. Get Arguments
         model_args[setting] = loaded_model_args[setting] 
     
     # Override for Step Case
-    dataset_args['name'] = 'Step'
+    dataset_args['name'] = 'Cavity'
     # dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\backward_facing_step_normalized.npy'
     #dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\cavity_with_bc_normalized.npy'
     
