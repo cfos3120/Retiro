@@ -143,7 +143,15 @@ if __name__ == '__main__':# 0. Get Arguments
                                     lr=training_args['base_lr'],
                                     weight_decay=training_args['weight-decay']
                                     )
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=training_args['step_size'], gamma=0.7)
+    #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=training_args['step_size'], gamma=0.7)
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, 
+                                                        max_lr=training_args['base_lr'], 
+                                                        div_factor=1e4, 
+                                                        pct_start=0.2, 
+                                                        final_div_factor=1e4, 
+                                                        steps_per_epoch=1, 
+                                                        epochs=training_args['epochs']
+                                                        )
     relobralo = RELOBRALO(device=device)
 
     loss_fn = LP_custom() #torch.nn.MSELoss()
