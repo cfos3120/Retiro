@@ -75,7 +75,7 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
     optimizer.step()
     optimizer.zero_grad()
 
-    return loss_logger.aggregate(), out.detach().numpy(), x.detach().numpy()
+    return loss_logger.aggregate(), out.detach().cpu().numpy(), x.detach().cpu().numpy()
 
 
 if __name__ == '__main__':# 0. Get Arguments 
