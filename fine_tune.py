@@ -75,7 +75,7 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
     optimizer.step()
     optimizer.zero_grad()
 
-    return loss_logger.aggregate()
+    return loss_logger.aggregate(), out.detach().numpy(), x.detach().numpy()
 
 
 if __name__ == '__main__':# 0. Get Arguments 
@@ -156,17 +156,21 @@ if __name__ == '__main__':# 0. Get Arguments
 
     loss_fn = LP_custom() #torch.nn.MSELoss()
     
+    intermediate_results = np.empty((4,batch[3].shape[-2], batch[3].shape[-1]))
+    intermediate_results_list = dict()
+    intermediate_results_index = 0
+
     # 4. Train Epochs
     for epoch in range(training_args['epochs']):
 
-        output_log = fine_tune_case(model, 
-                                    batch, 
-                                    optimizer, 
-                                    loss_function=loss_fn,
-                                    output_normalizer=dataset.y_normalizer.to(device),
-                                    keys_normalizer=dataset.xi_normalizer.to(device),
-                                    dyn_loss_bal = training_args['dynamic_balance']
-                                    )
+        output_log, solution, input = fine_tune_case(model, 
+                                                    batch, 
+                                                    optimizer, 
+                                                    loss_function=loss_fn,
+                                                    output_normalizer=dataset.y_normalizer.to(device),
+                                                    keys_normalizer=dataset.xi_normalizer.to(device),
+                                                    dyn_loss_bal = training_args['dynamic_balance']
+                                                    )
         train_logger.update(output_log)
         scheduler.step()
         
@@ -178,6 +182,12 @@ if __name__ == '__main__':# 0. Get Arguments
               f"BC (D): {output_log['BC (D)']:.4E} | " + \
               f"BC (VN): {output_log['BC (VN)']:.4E}"
               )
+        
+        if (epoch+1) % (training_args['epochs']/4) == 0:
+            intermediate_results[intermediate_results_index, ...] = solution
+
+    intermediate_results_list['intermediate_results'] = intermediate_results
+    intermediate_results_list['coordinates'] = batch[0]
 
     # Save model checkpoints
     save_checkpoint(training_args["save_dir"], 
