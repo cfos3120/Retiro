@@ -7,7 +7,7 @@ def get_default_args():
     dataset_args['L']           = 1.0
     dataset_args['sub_x']       = 8
     dataset_args['normalize_y'] = True
-    dataset_args['normalize_x'] = True
+    dataset_args['normalize_x'] = False
     dataset_args['normalize_f'] = True
     dataset_args['vertex']      = True
     dataset_args['boundaries']  = True
