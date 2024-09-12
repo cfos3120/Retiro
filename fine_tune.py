@@ -48,7 +48,8 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
 
     # Un-normalize output if not already in wrapped model forward()
     if model.output_normalizer is None:
-        out = output_normalizer.transform(out, inverse = True)          
+        out = output_normalizer.transform(out, inverse = True)
+        y = output_normalizer.transform(y, inverse = True) # <- for dircihlet BC        
     
     # Caclulate PDE and BC Losses
 
