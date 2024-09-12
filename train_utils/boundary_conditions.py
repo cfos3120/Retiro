@@ -46,7 +46,7 @@ def bc_loss(model_y,y,bc_index,derivatives, loss_function, ARGS):
         d_loss += [loss_function(model_y[:,bc_index[patch],1],y[:,bc_index[patch],1])]
     for patch in boundary_mapping[ARGS.data_name]['D_BC']['p']:
         d_loss += [loss_function(model_y[:,bc_index[patch],2],y[:,bc_index[patch],2])]
-    d_loss = torch.mean(torch.stack(d_loss))
+    d_loss = loss_function(torch.stack(d_loss)) # maybe fix this
 
     # d_loss = 0
     # for patch in bc_index:
@@ -73,7 +73,7 @@ def bc_loss(model_y,y,bc_index,derivatives, loss_function, ARGS):
     for patch in boundary_mapping[ARGS.data_name]['VN_BC']['p']:
         vn_loss += [loss_function(derivatives['p_x'][:,bc_index[patch]])]
         vn_loss += [loss_function(derivatives['p_y'][:,bc_index[patch]])]
-    vn_loss = torch.mean(torch.stack(vn_loss))
+    vn_loss = loss_function(torch.stack(vn_loss))
 
     # for patch in ['inlet', 'upperWall', 'lowerWall']:
     #     vn_loss += loss_function(derivatives['p_x'][:,bc_index[patch]])
