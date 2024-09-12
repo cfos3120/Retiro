@@ -53,8 +53,8 @@ def ns_pde_autograd_loss(model_input_coords, model_out, Re, loss_function=torch.
 
     if bc_index is not None:
         patch_mins = []
-        for patch in bc_index['Boundary Indices']:
-            patch_mins += [bc_index['Boundary Indices'][patch].min()]
+        for patch in bc_index:
+            patch_mins += [bc_index[patch].min()]
 
         start_bc = np.min(patch_mins)
     else:
