@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 
 # Autograd Calculation of Gradients and Navier-Stokes Equations
 def ns_pde_autograd(model_input_coords, model_out, Re):
@@ -46,13 +47,22 @@ def ns_pde_autograd(model_input_coords, model_out, Re):
 
 
 # Loss Function application and construction function
-def ns_pde_autograd_loss(model_input_coords, model_out, Re, loss_function=torch.nn.MSELoss()):
+def ns_pde_autograd_loss(model_input_coords, model_out, Re, loss_function=torch.nn.MSELoss(),bc_index=None):
 
     pde_eqns, derivatives = ns_pde_autograd(model_input_coords, model_out, Re)
 
+    if bc_index is not None:
+        patch_mins = []
+        for patch in bc_index['Boundary Indices']:
+            patch_mins += [bc_index['Boundary Indices'][patch].min()]
+
+        start_bc = np.min(patch_mins)
+    else:
+        start_bc = pde_eqns.shape[1] + 1
+
     loss_list = list()
     for pde_eqn in pde_eqns:
-        pde_loss = loss_function(pde_eqn,torch.zeros_like(pde_eqn))
+        pde_loss = loss_function(pde_eqn[:,:start_bc],torch.zeros_like(pde_eqn[:,:start_bc]))
         loss_list.append(pde_loss)
 
     return loss_list, derivatives
