@@ -58,7 +58,7 @@ def ns_pde_autograd_loss(model_input_coords, model_out, Re, loss_function=torch.
 
         start_bc = np.min(patch_mins)
     else:
-        start_bc = pde_eqns.shape[1] + 1
+        start_bc = pde_eqns[0].shape[1] + 1
 
     loss_list = list()
     for pde_eqn in pde_eqns:

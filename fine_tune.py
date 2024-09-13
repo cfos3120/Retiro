@@ -49,13 +49,17 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
     # Un-normalize output if not already in wrapped model forward()
     if model.output_normalizer is None:
         out = output_normalizer.transform(out, inverse = True)
-        y = output_normalizer.transform(y, inverse = True) # <- for dircihlet BC        
+        y = output_normalizer.transform(y, inverse = True) # <- for dircihlet BC
+
+    # Override (Hard Enforce) Boundaries (Only Velocity)
+    for patch in index['Boundary Indices']:#['movingWall']:
+        out[:,index['Boundary Indices'][patch].flatten(),:2] = y[:,index['Boundary Indices'][patch].flatten(),:2]
     
     # Caclulate PDE and BC Losses
 
     # PDE
     x_i = keys_normalizer.transform(x_i, inverse = True)  
-    pde_loss_list, derivatives = ns_pde_autograd_loss(x,out,Re=x_i,loss_function=loss_function,bc_index=index['Boundary Indices'])
+    pde_loss_list, derivatives = ns_pde_autograd_loss(x,out,Re=x_i,loss_function=loss_function)#,bc_index=index['Boundary Indices'])
     all_losses_list += pde_loss_list
 
     # BC (von Neumann and Dirichlet)
