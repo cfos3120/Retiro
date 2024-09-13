@@ -52,8 +52,8 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
         y = output_normalizer.transform(y, inverse = True) # <- for dircihlet BC
 
     # Override (Hard Enforce) Boundaries (Only Velocity)
-    for patch in index['Boundary Indices']:#['movingWall']:
-        out[:,index['Boundary Indices'][patch].flatten(),:2] = y[:,index['Boundary Indices'][patch].flatten(),:2]
+    # for patch in index['Boundary Indices']:#['movingWall']:
+    #     out[:,index['Boundary Indices'][patch].flatten(),:2] = y[:,index['Boundary Indices'][patch].flatten(),:2]
     
     # Caclulate PDE and BC Losses
 
@@ -159,7 +159,7 @@ if __name__ == '__main__':# 0. Get Arguments
                                                         )
     relobralo = RELOBRALO(device=device)
 
-    loss_fn = Linf_custom() #LP_custom() #torch.nn.MSELoss()
+    loss_fn = LP_custom() #Linf_custom()  #torch.nn.MSELoss()
     
     intermediate_results = np.zeros((4,batch[2].shape[-2], batch[2].shape[-1]))
     intermediate_results_list = dict()
