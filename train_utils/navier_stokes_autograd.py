@@ -6,6 +6,7 @@ def ns_pde_autograd(model_input_coords, model_out, Re):
 
     # Stack and Repeat Re for tensor multiplication
     Re = Re.squeeze(-1)
+    print('Re', Re.item(), "Max:", model_input_coords.max().item(), "Min:",model_input_coords.min().item())
 
     u = model_out[..., 0]
     v = model_out[..., 1]
