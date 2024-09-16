@@ -31,7 +31,7 @@ seed_generator = torch.Generator().manual_seed(42)
 
 def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), output_normalizer=None, keys_normalizer=None, dyn_loss_bal = False):
 
-    keys = ['PDE 1 (c)', 'PDE 2 (x)', 'PDE 3 (y)', 'BC (D)', 'BC (VN)']
+    keys = ['Supervised Loss', 'PDE 1 (c)', 'PDE 2 (x)', 'PDE 3 (y)', 'BC (D)', 'BC (VN)']
     loss_logger = loss_aggregator()
 
     x, x_i, y, index = case #(case is a batch)
@@ -71,7 +71,7 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
     # Store losses:
     loss_dict = {keys[i]:j.item() for i,j in enumerate(all_losses_list)}
     loss_dict.update({'Total_Loss':total_losses_bal.item()})
-    loss_dict.update({'Supervised Loss':supervised_loss.item()})
+    #loss_dict.update({'Supervised Loss':supervised_loss.item()})
     loss_dict.update({i:relobralo.lam[i].item() for i in relobralo.lam.keys()})
     loss_logger.add(loss_dict)
 
