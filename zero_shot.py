@@ -35,12 +35,12 @@ class pinn_zeroShot():
         self.x = case[0]
         self.xi = case[1]
         self.y = case[2]
+        self.x, self.xi, self.y = self.x.to(device), self.xi.to(device), self.y.to(device)
         self.output_normalizer = output_normalizer
         self.y = self.output_normalizer.transform(self.y, inverse = True) # <- for dircihlet BC
         self.keys_normalizer = keys_normalizer
         self.bc_index = case[3]
 
-        self.x, self.xi, self.y = self.x.to(device), self.xi.to(device), self.y.to(device)
         self.x.requires_grad = True
 
         self.loss_function = loss_function
