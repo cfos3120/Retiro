@@ -180,10 +180,10 @@ if __name__ == '__main__':# 0. Get Arguments
                                    keys_normalizer=dataset.xi_normalizer.to(device), 
                                    output_normalizer=dataset.y_normalizer.to(device))
 
-    print(zeroShot_model.closure())
+    zeroShot_model.train()
 
     # Save model checkpoints
     save_checkpoint(training_args["save_dir"], 
                     training_args["save_name"] + f'_fine_RE{RE_number:.0f}', 
                     model=zeroShot_model.model, 
-                    loss_dict=zeroShot_model.train_logger.dictionary)
+                    loss_dict=zeroShot_model.model.train_logger.dictionary)
