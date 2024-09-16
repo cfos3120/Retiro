@@ -65,14 +65,14 @@ def bc_loss(model_y,y,bc_index,derivatives, loss_function, ARGS):
     
     vn_loss = []
     for patch in boundary_mapping[ARGS.data_name]['VN_BC']['u']:
-        vn_loss += [loss_function(derivatives['u_x'][:,bc_index[patch]])]
-        vn_loss += [loss_function(derivatives['u_y'][:,bc_index[patch]])]
+        vn_loss += [loss_function(derivatives['u_x'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
+        vn_loss += [loss_function(derivatives['u_y'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
     for patch in boundary_mapping[ARGS.data_name]['VN_BC']['v']:
-        vn_loss += [loss_function(derivatives['v_x'][:,bc_index[patch]])]
-        vn_loss += [loss_function(derivatives['v_y'][:,bc_index[patch]])]
+        vn_loss += [loss_function(derivatives['v_x'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
+        vn_loss += [loss_function(derivatives['v_y'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
     for patch in boundary_mapping[ARGS.data_name]['VN_BC']['p']:
-        vn_loss += [loss_function(derivatives['p_x'][:,bc_index[patch]])]
-        vn_loss += [loss_function(derivatives['p_y'][:,bc_index[patch]])]
+        vn_loss += [loss_function(derivatives['p_x'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
+        vn_loss += [loss_function(derivatives['p_y'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
     vn_loss = torch.mean(torch.stack(vn_loss))
 
     # for patch in ['inlet', 'upperWall', 'lowerWall']:

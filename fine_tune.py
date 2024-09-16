@@ -60,7 +60,10 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
 
     # PDE
     x_i = keys_normalizer.transform(x_i, inverse = True)  
-    pde_loss_list, derivatives = ns_pde_autograd_loss(x,out,Re=x_i,loss_function=loss_function,pressure=True)#,bc_index=index['Boundary Indices'])
+    pde_loss_list, derivatives = ns_pde_autograd_loss(x,out,Re=x_i,loss_function=loss_function,
+                                                      pressure=True, 
+                                                      bc_index=index['Boundary Indices']
+                                                      )
     all_losses_list += pde_loss_list
 
     # BC (von Neumann and Dirichlet)
