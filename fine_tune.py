@@ -44,7 +44,8 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
     out = model(x, inputs=x_i)
 
     # Calculate supervised pointwise loss (for validation only)
-    supervised_loss = loss_function(out,y)
+    supervised_loss = loss_function(out[...,2],y[...,2])
+    all_losses_list += [supervised_loss] #(for pressure enforcment only)
 
     # Un-normalize output if not already in wrapped model forward()
     if model.output_normalizer is None:
