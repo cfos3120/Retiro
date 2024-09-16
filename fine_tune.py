@@ -31,7 +31,7 @@ seed_generator = torch.Generator().manual_seed(42)
 
 def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), output_normalizer=None, keys_normalizer=None, dyn_loss_bal = False):
 
-    keys = ['Supervised Loss', 'PDE 1 (c)', 'PDE 2 (x)', 'PDE 3 (y)', 'BC (D)', 'BC (VN)']
+    keys = ['PDE 1 (c)', 'PDE 2 (x)', 'PDE 3 (y)', 'PDE 4 (p)', 'BC (D)', 'BC (VN)']
     loss_logger = loss_aggregator()
 
     x, x_i, y, index = case #(case is a batch)
@@ -45,7 +45,7 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
 
     # Calculate supervised pointwise loss (for validation only)
     supervised_loss = loss_function(out[...,2],y[...,2])
-    all_losses_list += [supervised_loss] #(for pressure enforcment only)
+    #all_losses_list += [supervised_loss] #(for pressure enforcment only)
 
     # Un-normalize output if not already in wrapped model forward()
     if model.output_normalizer is None:
@@ -60,7 +60,7 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
 
     # PDE
     x_i = keys_normalizer.transform(x_i, inverse = True)  
-    pde_loss_list, derivatives = ns_pde_autograd_loss(x,out,Re=x_i,loss_function=loss_function)#,bc_index=index['Boundary Indices'])
+    pde_loss_list, derivatives = ns_pde_autograd_loss(x,out,Re=x_i,loss_function=loss_function,pressure=True)#,bc_index=index['Boundary Indices'])
     all_losses_list += pde_loss_list
 
     # BC (von Neumann and Dirichlet)
@@ -71,7 +71,7 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
     # Store losses:
     loss_dict = {keys[i]:j.item() for i,j in enumerate(all_losses_list)}
     loss_dict.update({'Total_Loss':total_losses_bal.item()})
-    #loss_dict.update({'Supervised Loss':supervised_loss.item()})
+    loss_dict.update({'Supervised Loss':supervised_loss.item()})
     loss_dict.update({i:relobralo.lam[i].item() for i in relobralo.lam.keys()})
     loss_logger.add(loss_dict)
 

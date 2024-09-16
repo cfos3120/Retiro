@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 # Autograd Calculation of Gradients and Navier-Stokes Equations
-def ns_pde_autograd(model_input_coords, model_out, Re):
+def ns_pde_autograd(model_input_coords, model_out, Re, pressure=False):
 
     # Stack and Repeat Re for tensor multiplication
     Re = Re.squeeze(-1)
@@ -43,14 +43,19 @@ def ns_pde_autograd(model_input_coords, model_out, Re):
                    'u_x':u_x, 'u_y':u_y, 'v_x':v_x, 'v_y':v_y, 'p_x':p_x, 'p_y':p_y,
                    'u_xx':u_xx, 'u_yy':u_yy, 'v_xx':v_xx, 'v_yy':v_yy
                    }
-
-    return [f0,f1,f2], derivatives
+    
+    # Pressure correction (incomressible condition)
+    if pressure:
+        f3 = (u**2 + v**2)*1/2 - p
+        return [f0,f1,f2,f3], derivatives
+    else:
+        return [f0,f1,f2], derivatives
 
 
 # Loss Function application and construction function
-def ns_pde_autograd_loss(model_input_coords, model_out, Re, loss_function=torch.nn.MSELoss(),bc_index=None):
+def ns_pde_autograd_loss(model_input_coords, model_out, Re, loss_function=torch.nn.MSELoss(),bc_index=None, pressure=False):
 
-    pde_eqns, derivatives = ns_pde_autograd(model_input_coords, model_out, Re)
+    pde_eqns, derivatives = ns_pde_autograd(model_input_coords, model_out, Re, pressure=pressure)
 
     if bc_index is not None:
         patch_mins = []
