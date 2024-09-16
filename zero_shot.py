@@ -127,7 +127,7 @@ if __name__ == '__main__':# 0. Get Arguments
     # Override for Step Case
     dataset_args['name'] = 'Cavity'
     # dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\backward_facing_step_normalized.npy'
-    dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\cavity_with_bc_normalized.npy'
+    # dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\cavity_with_bc_normalized.npy'
     
     # hard override so we can use the sub_x args.
     sub_x = int(ARGS.sub_x)
