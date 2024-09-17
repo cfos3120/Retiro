@@ -95,16 +95,16 @@ def ns_burgers(model_input_coords, model_out, Re):
     u = model_out
 
     # First Derivatives
-    u_out = torch.autograd.grad(u.sum(), model_input_coords, create_graph=True)[0]
+    u_x = torch.autograd.grad(u, model_input_coords[...,0], grad_outputs=torch.ones_like(u), create_graph=True, retain_graph=True)[0]
+    u_t = torch.autograd.grad(u, model_input_coords[...,1], grad_outputs=torch.ones_like(u), create_graph=True, retain_graph=True)[0]
 
-    u_x = u_out[..., 0]
-    u_t = u_out[..., 1]
-    
     # Second Derivatives
-    u_xx = torch.autograd.grad(u_x.sum(), model_input_coords, create_graph=True)[0][..., 0]
+    u_xx = torch.autograd.grad(u_x, model_input_coords[...,0], grad_outputs=torch.ones_like(u_x), create_graph=True, retain_graph=True)[0]
 
+    
     # Navier-Stokes equation
     f1 = u_t + u*u_x - ((1/Re)*u_xx)
+    print(torch.mean(u_x), torch.mean(u_t), torch.mean(u_xx), torch.mean(f1))
     
     return f1
 
