@@ -19,15 +19,11 @@ from data_utils.cavity_isotropic_subsampler import cavity_isotropic_subsampler
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-global ARGS 
-ARGS = parse_arguments()
-
-
-torch.manual_seed(ARGS.seed)
-torch.cuda.manual_seed(ARGS.seed)
-np.random.seed(ARGS.seed)
-torch.cuda.manual_seed_all(ARGS.seed)
-get_seed(ARGS.seed, printout=True, cudnn=False)
+torch.manual_seed(42)
+torch.cuda.manual_seed(42)
+np.random.seed(42)
+torch.cuda.manual_seed_all(42)
+get_seed(42, printout=True, cudnn=False)
 seed_generator = torch.Generator().manual_seed(42)
 
 def grid_burger():
@@ -104,7 +100,7 @@ def ns_burgers(model_input_coords, model_out, Re):
     
     # Navier-Stokes equation
     f1 = u_t + u*u_x - ((1/Re)*u_xx)
-    print(torch.mean(u_x), torch.mean(u_t), torch.mean(u_xx), torch.mean(f1))
+    #print(torch.mean(u_x), torch.mean(u_t), torch.mean(u_xx), torch.mean(f1))
     
     return f1
 
@@ -131,7 +127,7 @@ class pinn_zeroShot():
 
         self.loss_function = loss_function
         self.optimizer = torch.optim.LBFGS(self.model.parameters(),
-                                    lr=1,
+                                    lr=0.1,
                                     max_iter=50000,
                                     max_eval=50000,
                                     history_size=50,
@@ -140,6 +136,7 @@ class pinn_zeroShot():
                                     line_search_fn="strong_wolfe")
         
         self.iter = 0
+        self.ls = 0
         
 
     def closure(self):
