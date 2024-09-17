@@ -131,7 +131,7 @@ class pinn_zeroShot():
                                     max_iter=50000,
                                     max_eval=50000,
                                     history_size=50,
-                                    tolerance_grad=1e-05,
+                                    tolerance_grad=1e-09,
                                     tolerance_change=0.5 * np.finfo(float).eps,
                                     line_search_fn="strong_wolfe")
         
@@ -165,7 +165,7 @@ class pinn_zeroShot():
 
         # print report:
         if not self.iter % 100:
-            print('Epoch: {0:}, Loss: {1:6.3f}'.format(self.iter, self.ls))
+            print('Epoch: {0:}, Loss: {1:9.5f} Full Loss {1:9.5f} Boundary Loss {1:9.5f}'.format(self.iter, self.ls, loss_pde.item(), loss_bc.item()))
 
         return self.ls
     
