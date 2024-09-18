@@ -7,11 +7,11 @@ import torch
 boundary_mapping = {'Cavity' :{
                         'D_BC' : {
                             'p' : [],
-                            'u' : ['movingWall','fixedWalls'],
-                            'v' : ['movingWall','fixedWalls']
+                            'u' : ['Lid', 'Left Wall', 'Bottom Wall', 'Right Wall'],  #['movingWall','fixedWalls']
+                            'v' : ['Lid', 'Left Wall', 'Bottom Wall', 'Right Wall']   #['movingWall','fixedWalls']
                             },
                         'VN_BC' : {
-                            'p' : ['movingWall','fixedWalls'],
+                            'p' : [], #'movingWall','fixedWalls'], #normal gradient
                             'u' : [],
                             'v' : []
                             }
@@ -64,15 +64,22 @@ def bc_loss(model_y,y,bc_index,derivatives, loss_function, ARGS):
     # vn_loss += loss_function(derivatives['u_y'][:,bc_index['outlet']])
     
     vn_loss = []
-    for patch in boundary_mapping[ARGS.data_name]['VN_BC']['u']:
-        vn_loss += [loss_function(derivatives['u_x'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
-        vn_loss += [loss_function(derivatives['u_y'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
-    for patch in boundary_mapping[ARGS.data_name]['VN_BC']['v']:
-        vn_loss += [loss_function(derivatives['v_x'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
-        vn_loss += [loss_function(derivatives['v_y'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
-    for patch in boundary_mapping[ARGS.data_name]['VN_BC']['p']:
-        vn_loss += [loss_function(derivatives['p_x'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
-        vn_loss += [loss_function(derivatives['p_y'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
+    # for patch in boundary_mapping[ARGS.data_name]['VN_BC']['u']:
+    #     vn_loss += [loss_function(derivatives['u_x'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
+    #     vn_loss += [loss_function(derivatives['u_y'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
+    # for patch in boundary_mapping[ARGS.data_name]['VN_BC']['v']:
+    #     vn_loss += [loss_function(derivatives['v_x'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
+    #     vn_loss += [loss_function(derivatives['v_y'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
+    # for patch in boundary_mapping[ARGS.data_name]['VN_BC']['p']:
+    #     vn_loss += [loss_function(derivatives['p_x'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
+    #     vn_loss += [loss_function(derivatives['p_y'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
+
+    # Normal Gradients
+    vn_loss += [loss_function(derivatives['p_y'][:,bc_index['Lid']],        torch.zeros_like(derivatives['p_y'][:,bc_index[patch]]))]
+    vn_loss += [loss_function(derivatives['p_x'][:,bc_index['Left Wall']],  torch.zeros_like(derivatives['p_x'][:,bc_index[patch]]))]
+    vn_loss += [loss_function(derivatives['p_y'][:,bc_index['Bottom Wall']],torch.zeros_like(derivatives['p_y'][:,bc_index[patch]]))]
+    vn_loss += [loss_function(derivatives['p_x'][:,bc_index['Right Wall']], torch.zeros_like(derivatives['p_x'][:,bc_index[patch]]))]
+
     vn_loss = torch.mean(torch.stack(vn_loss))
 
     # for patch in ['inlet', 'upperWall', 'lowerWall']:

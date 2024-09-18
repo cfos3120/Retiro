@@ -31,7 +31,7 @@ seed_generator = torch.Generator().manual_seed(42)
 
 def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), output_normalizer=None, keys_normalizer=None, dyn_loss_bal = False):
 
-    keys = ['PDE 1 (c)', 'PDE 2 (x)', 'PDE 3 (y)', 'PDE 4 (p)', 'BC (D)', 'BC (VN)']
+    keys = ['PDE 1 (c)', 'PDE 2 (x)', 'PDE 3 (y)', 'BC (D)', 'BC (VN)'] #, 'PDE 4 (p)'
     loss_logger = loss_aggregator()
 
     x, x_i, y, index = case #(case is a batch)
@@ -44,8 +44,7 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
     out = model(x, inputs=x_i)
 
     # Calculate supervised pointwise loss (for validation only)
-    supervised_loss = loss_function(out[...,2],y[...,2])
-    #all_losses_list += [supervised_loss] #(for pressure enforcment only)
+    supervised_loss = loss_function(out,y)
 
     # Un-normalize output if not already in wrapped model forward()
     if model.output_normalizer is None:
@@ -60,14 +59,22 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
 
     # PDE
     x_i = keys_normalizer.transform(x_i, inverse = True)  
-    pde_loss_list, derivatives = ns_pde_autograd_loss(x,out,Re=x_i,loss_function=loss_function,
-                                                      pressure=True, 
-                                                      bc_index=index['Boundary Indices']
+    pde_loss_list, derivatives = ns_pde_autograd_loss(x,
+                                                      out,
+                                                      Re=x_i,
+                                                      loss_function=loss_function,
+                                                      pressure=False
                                                       )
     all_losses_list += pde_loss_list
 
     # BC (von Neumann and Dirichlet)
-    bc_loss_list = bc_loss(out,y,bc_index=index['Boundary Indices'],derivatives=derivatives,loss_function=loss_function,ARGS=ARGS)
+    bc_loss_list = bc_loss(out,
+                           y,
+                           bc_index=index['Boundary Indices'],
+                           derivatives=derivatives,
+                           loss_function=loss_function,
+                           ARGS=ARGS
+                           )
     all_losses_list += bc_loss_list
     total_losses_bal = relobralo(loss_list=all_losses_list) + 0.0*supervised_loss
 
@@ -84,7 +91,7 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
     optimizer.step()
     optimizer.zero_grad()
 
-    return loss_logger.aggregate(), out.detach().cpu().numpy(), x.detach().cpu().numpy()
+    return loss_logger.aggregate()
 
 
 if __name__ == '__main__':# 0. Get Arguments 
@@ -99,7 +106,7 @@ if __name__ == '__main__':# 0. Get Arguments
     # Override for Step Case
     dataset_args['name'] = 'Cavity'
     # dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\backward_facing_step_normalized.npy'
-    #dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\cavity_with_bc_normalized.npy'
+    dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\cavity_with_manual_bc_normalized.npy'
     
     # hard override so we can use the sub_x args.
     sub_x = int(ARGS.sub_x)
@@ -172,14 +179,14 @@ if __name__ == '__main__':# 0. Get Arguments
     # 4. Train Epochs
     for epoch in range(training_args['epochs']):
 
-        output_log, solution, input = fine_tune_case(model, 
-                                                    batch, 
-                                                    optimizer, 
-                                                    loss_function=loss_fn,
-                                                    output_normalizer=dataset.y_normalizer.to(device),
-                                                    keys_normalizer=dataset.xi_normalizer.to(device),
-                                                    dyn_loss_bal = training_args['dynamic_balance']
-                                                    )
+        output_log = fine_tune_case(model, 
+                                    batch, 
+                                    optimizer, 
+                                    loss_function=loss_fn,
+                                    output_normalizer=dataset.y_normalizer.to(device),
+                                    keys_normalizer=dataset.xi_normalizer.to(device),
+                                    dyn_loss_bal = training_args['dynamic_balance']
+                                    )
         train_logger.update(output_log)
         scheduler.step()
         
@@ -191,13 +198,10 @@ if __name__ == '__main__':# 0. Get Arguments
               f"BC (D): {output_log['BC (D)']:.4E} | " + \
               f"BC (VN): {output_log['BC (VN)']:.4E}"
               )
-        
-        if (epoch+1) % (training_args['epochs']/4) == 0:
-            intermediate_results[intermediate_results_index, ...] = solution # this appears to only work for the first time?
 
-    intermediate_results_list['solutions'] = intermediate_results
-    intermediate_results_list['coordinates'] = batch[0]
-    train_logger.dictionary['intermediate_results'] = intermediate_results_list
+    # intermediate_results_list['solutions'] = intermediate_results
+    # intermediate_results_list['coordinates'] = batch[0]
+    # train_logger.dictionary['intermediate_results'] = intermediate_results_list
 
     # Save model checkpoints
     save_checkpoint(training_args["save_dir"], 

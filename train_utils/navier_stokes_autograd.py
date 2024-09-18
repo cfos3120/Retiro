@@ -13,9 +13,9 @@ def ns_pde_autograd(model_input_coords, model_out, Re, pressure=False):
     p = model_out[..., 2]
 
     # First Derivatives
-    u_out = torch.autograd.grad(u.sum(), model_input_coords, create_graph=True)[0]
-    v_out = torch.autograd.grad(v.sum(), model_input_coords, create_graph=True)[0]
-    p_out = torch.autograd.grad(p.sum(), model_input_coords, create_graph=True)[0]
+    u_out = torch.autograd.grad(u.sum(), model_input_coords, create_graph=True, retain_graph=True)[0]
+    v_out = torch.autograd.grad(v.sum(), model_input_coords, create_graph=True, retain_graph=True)[0]
+    p_out = torch.autograd.grad(p.sum(), model_input_coords, create_graph=True, retain_graph=True)[0]
 
     u_x = u_out[..., 0]
     u_y = u_out[..., 1]
@@ -27,10 +27,10 @@ def ns_pde_autograd(model_input_coords, model_out, Re, pressure=False):
     p_y = p_out[..., 1]
     
     # Second Derivatives
-    u_xx = torch.autograd.grad(u_x.sum(), model_input_coords, create_graph=True)[0][..., 0]
-    u_yy = torch.autograd.grad(u_y.sum(), model_input_coords, create_graph=True)[0][..., 1]
-    v_xx = torch.autograd.grad(v_x.sum(), model_input_coords, create_graph=True)[0][..., 0]
-    v_yy = torch.autograd.grad(v_y.sum(), model_input_coords, create_graph=True)[0][..., 1]
+    u_xx = torch.autograd.grad(u_x.sum(), model_input_coords, create_graph=True, retain_graph=True)[0][..., 0]
+    u_yy = torch.autograd.grad(u_y.sum(), model_input_coords, create_graph=True, retain_graph=True)[0][..., 1]
+    v_xx = torch.autograd.grad(v_x.sum(), model_input_coords, create_graph=True, retain_graph=True)[0][..., 0]
+    v_yy = torch.autograd.grad(v_y.sum(), model_input_coords, create_graph=True, retain_graph=True)[0][..., 1]
 
     # Continuity equation
     f0 = u_x + v_y
@@ -53,22 +53,13 @@ def ns_pde_autograd(model_input_coords, model_out, Re, pressure=False):
 
 
 # Loss Function application and construction function
-def ns_pde_autograd_loss(model_input_coords, model_out, Re, loss_function=torch.nn.MSELoss(),bc_index=None, pressure=False):
+def ns_pde_autograd_loss(model_input_coords, model_out, Re, loss_function=torch.nn.MSELoss(), pressure=False):
 
     pde_eqns, derivatives = ns_pde_autograd(model_input_coords, model_out, Re, pressure=pressure)
 
-    if bc_index is not None:
-        patch_mins = []
-        for patch in bc_index:
-            patch_mins += [bc_index[patch].min()]
-
-        start_bc = np.min(patch_mins)
-    else:
-        start_bc = pde_eqns[0].shape[1] + 1
-
     loss_list = list()
     for pde_eqn in pde_eqns:
-        pde_loss = loss_function(pde_eqn[:,:start_bc],torch.zeros_like(pde_eqn[:,:start_bc]))
+        pde_loss = loss_function(pde_eqn,torch.zeros_like(pde_eqn))
         loss_list.append(pde_loss)
 
     return loss_list, derivatives
@@ -86,6 +77,15 @@ class wrapped_model(torch.nn.Module):
         self.query_normalizer = query_normalizer
         self.output_normalizer = output_normalizer
         self.model = model
+
+        if self.output_normalizer is None: 
+            print('Model has NO output_normalizer wrapped')
+        else:
+            print('Model HAS a output_normalizer wrapped')
+        if self.query_normalizer is None: 
+            print('Model has NO query_normalizer wrapped')
+        else:
+            print('Model HAS a query_normalizer wrapped')
 
     def forward(self,x,inputs):
         

@@ -127,11 +127,11 @@ class pinn_zeroShot():
 
         self.loss_function = loss_function
         self.optimizer = torch.optim.LBFGS(self.model.parameters(),
-                                    lr=0.1,
+                                    lr=1,
                                     max_iter=50000,
                                     max_eval=50000,
                                     history_size=50,
-                                    tolerance_grad=1e-09,
+                                    tolerance_grad=1e-05,
                                     tolerance_change=0.5 * np.finfo(float).eps,
                                     line_search_fn="strong_wolfe")
         

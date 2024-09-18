@@ -111,7 +111,7 @@ def parse_arguments():
     parser.add_argument('--Secondary_optimizer'   , type=int  , default=0)
     parser.add_argument('--dynamic_balance'   , type=int  , default=0)
     parser.add_argument('--ko_res'      , type=int  , default=32)
-    parser.add_argument('--data_name'    , type=str  , default='test')
+    parser.add_argument('--data_name'    , type=str  , default='Cavity')
 
     # for fine-tunings
     parser.add_argument('--case_n'    , type=int  , default=0)

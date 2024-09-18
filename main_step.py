@@ -54,14 +54,15 @@ def hybrid_train_batch(model, dataloader, optimizer, loss_function=torch.nn.MSEL
         all_losses_list += [supervised_loss]
 
         # Un-normalize output if not already in wrapped model forward()
-        if model.output_normalizer is None:
+        if model.output_normalizer is None and output_normalizer is not None:
             out = output_normalizer.transform(out, inverse = True)          
         
         # Caclulate PDE and BC Losses
         if hybrid_type in ['Train','Monitor']:
 
             # PDE
-            x_i = keys_normalizer.transform(x_i, inverse = True)  
+            if keys_normalizer is not None:
+                x_i = keys_normalizer.transform(x_i, inverse = True)  
             pde_loss_list, derivatives = ns_pde_autograd_loss(x,out,Re=x_i,loss_function=loss_function)
             all_losses_list += pde_loss_list
 
