@@ -16,8 +16,8 @@ def ns_pde_numerical(model_input_coords, model_out_pure, Re, bc_index, pressure=
     resolution = int(np.sqrt(min_bc_index))
     mesh_coords = model_input_coords[0,:min_bc_index,:].reshape(resolution, resolution, 2)
     u = torch.zeros(B,resolution+2, resolution+2,C)
-    dx = mesh_coords[0,1,0] - mesh_coords[0,0,0]
-    dy = mesh_coords[1,0,1] - mesh_coords[0,0,1]
+    dx = (mesh_coords[0,1,0] - mesh_coords[0,0,0]).item()
+    dy = (mesh_coords[1,0,1] - mesh_coords[0,0,1]).item()
     
     if hard_bc: 
         raise NotImplementedError('Hard Boundaries not available yet (distance from cell to wall is not dx)')
