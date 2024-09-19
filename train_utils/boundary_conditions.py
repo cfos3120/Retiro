@@ -41,11 +41,11 @@ def bc_loss(model_y,y,bc_index,derivatives, loss_function, ARGS):
     
     d_loss = []
     for patch in boundary_mapping[ARGS.data_name]['D_BC']['u']:
-        d_loss += [loss_function(model_y[:,bc_index[patch],0],y[:,bc_index[patch],0])]
+        d_loss += [loss_function(model_y[:,bc_index[patch].flatten(),0],y[:,bc_index[patch],0])]
     for patch in boundary_mapping[ARGS.data_name]['D_BC']['v']:
-        d_loss += [loss_function(model_y[:,bc_index[patch],1],y[:,bc_index[patch],1])]
+        d_loss += [loss_function(model_y[:,bc_index[patch].flatten(),1],y[:,bc_index[patch],1])]
     for patch in boundary_mapping[ARGS.data_name]['D_BC']['p']:
-        d_loss += [loss_function(model_y[:,bc_index[patch],2],y[:,bc_index[patch],2])]
+        d_loss += [loss_function(model_y[:,bc_index[patch].flatten(),2],y[:,bc_index[patch],2])]
     d_loss = torch.mean(torch.stack(d_loss)) # maybe fix this
 
     # d_loss = 0
@@ -75,10 +75,10 @@ def bc_loss(model_y,y,bc_index,derivatives, loss_function, ARGS):
     #     vn_loss += [loss_function(derivatives['p_y'][:,bc_index[patch]], torch.zeros_like(derivatives['u_x'][:,bc_index[patch]]))]
 
     # Normal Gradients
-    vn_loss += [loss_function(derivatives['p_y'][:,bc_index['Lid']],        torch.zeros_like(derivatives['p_y'][:,bc_index[patch]]))]
-    vn_loss += [loss_function(derivatives['p_x'][:,bc_index['Left Wall']],  torch.zeros_like(derivatives['p_x'][:,bc_index[patch]]))]
-    vn_loss += [loss_function(derivatives['p_y'][:,bc_index['Bottom Wall']],torch.zeros_like(derivatives['p_y'][:,bc_index[patch]]))]
-    vn_loss += [loss_function(derivatives['p_x'][:,bc_index['Right Wall']], torch.zeros_like(derivatives['p_x'][:,bc_index[patch]]))]
+    vn_loss += [loss_function(derivatives['p_y'][:,bc_index['Lid'].flatten()],        torch.zeros_like(derivatives['p_y'][:,bc_index[patch].flatten()]))]
+    vn_loss += [loss_function(derivatives['p_x'][:,bc_index['Left Wall'].flatten()],  torch.zeros_like(derivatives['p_x'][:,bc_index[patch].flatten()]))]
+    vn_loss += [loss_function(derivatives['p_y'][:,bc_index['Bottom Wall'].flatten()],torch.zeros_like(derivatives['p_y'][:,bc_index[patch].flatten()]))]
+    vn_loss += [loss_function(derivatives['p_x'][:,bc_index['Right Wall'].flatten()], torch.zeros_like(derivatives['p_x'][:,bc_index[patch].flatten()]))]
 
     vn_loss = torch.mean(torch.stack(vn_loss))
 

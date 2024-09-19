@@ -10,14 +10,14 @@ def ns_pde_autograd(model_input_coords, model_out, Re, pressure=False):
 
     u = model_out[..., 0]
     v = model_out[..., 1]
-    p = model_out[..., 2]
+    p = model_out[..., 2] 
 
     # First Derivatives
     u_out = torch.autograd.grad(u.sum(), model_input_coords, create_graph=True, retain_graph=True)[0]
     v_out = torch.autograd.grad(v.sum(), model_input_coords, create_graph=True, retain_graph=True)[0]
     p_out = torch.autograd.grad(p.sum(), model_input_coords, create_graph=True, retain_graph=True)[0]
 
-    u_x = u_out[..., 0]
+    u_x = u_out[..., 0] #...might need to check the order of model_input_coords to ensure normal pressure boundary
     u_y = u_out[..., 1]
 
     v_x = v_out[..., 0]

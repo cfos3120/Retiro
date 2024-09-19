@@ -8,6 +8,7 @@ from data_utils.utils import parse_arguments, get_seed
 from models.retiro_model import GNOT
 from models.old_model import CGPTNO
 from train_utils.navier_stokes_autograd import ns_pde_autograd_loss, wrapped_model
+from train_utils.navier_stokes_numerical import ns_pde_numerical_loss
 from train_utils.boundary_conditions import bc_loss
 from train_utils.dynamic_loss_balancing import RELOBRALO
 from train_utils.logging import loss_aggregator, total_loss_list, save_checkpoint
@@ -59,22 +60,29 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
 
     # PDE
     x_i = keys_normalizer.transform(x_i, inverse = True)  
-    pde_loss_list, derivatives = ns_pde_autograd_loss(x,
-                                                      out,
-                                                      Re=x_i,
-                                                      loss_function=loss_function,
-                                                      pressure=False
-                                                      )
+    # pde_loss_list, derivatives = ns_pde_autograd_loss(x,
+    #                                                   out,
+    #                                                   Re=x_i,
+    #                                                   loss_function=loss_function,
+    #                                                   pressure=False
+    #                                                   )
+    pde_loss_list, bc_loss_list,__ = ns_pde_numerical_loss(x, 
+                                                            out,
+                                                            Re=x_i, 
+                                                            bc_index=index, 
+                                                            pressure=False, 
+                                                            loss_function=loss_function
+                                                            )
     all_losses_list += pde_loss_list
 
     # BC (von Neumann and Dirichlet)
-    bc_loss_list = bc_loss(out,
-                           y,
-                           bc_index=index['Boundary Indices'],
-                           derivatives=derivatives,
-                           loss_function=loss_function,
-                           ARGS=ARGS
-                           )
+    # bc_loss_list = bc_loss(out,
+    #                        y,
+    #                        bc_index=index['Boundary Indices'],
+    #                        derivatives=derivatives,
+    #                        loss_function=loss_function,
+    #                        ARGS=ARGS
+    #                        )
     all_losses_list += bc_loss_list
     total_losses_bal = relobralo(loss_list=all_losses_list) + 0.0*supervised_loss
 
@@ -86,6 +94,7 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
     loss_logger.add(loss_dict)
 
     # Update model
+    print(total_losses_bal)
     total_losses_bal.backward()
     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1000)
     optimizer.step()
@@ -106,7 +115,7 @@ if __name__ == '__main__':# 0. Get Arguments
     # Override for Step Case
     dataset_args['name'] = 'Cavity'
     # dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\backward_facing_step_normalized.npy'
-    #dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\cavity_with_manual_bc_normalized.npy'
+    dataset_args['file_path'] = r'C:\Users\Noahc\Documents\USYD\tutorial\python_utils\cavity_with_manual_bc_normalized.npy'
     
     # hard override so we can use the sub_x args.
     sub_x = int(ARGS.sub_x)
@@ -126,7 +135,7 @@ if __name__ == '__main__':# 0. Get Arguments
     
     case_n = training_args['case_n']
     batch = next(itertools.islice(train_loader, case_n, None))
-    batch[0], batch[2], batch[3] = cavity_isotropic_subsampler(batch[0],batch[2],batch[3], sub_x)
+    #batch[0], batch[2], batch[3] = cavity_isotropic_subsampler(batch[0],batch[2],batch[3], sub_x)
 
     RE_number = dataset.xi_normalizer.transform(batch[1], inverse = True).item()
     print(f'\nFine Tuning Case: RE {RE_number:.1f}\n')
@@ -171,10 +180,6 @@ if __name__ == '__main__':# 0. Get Arguments
     relobralo = RELOBRALO(device=device)
 
     loss_fn = LP_custom() #Linf_custom()  #torch.nn.MSELoss()
-    
-    intermediate_results = np.zeros((4,batch[2].shape[-2], batch[2].shape[-1]))
-    intermediate_results_list = dict()
-    intermediate_results_index = 0
 
     # 4. Train Epochs
     for epoch in range(training_args['epochs']):
@@ -198,10 +203,6 @@ if __name__ == '__main__':# 0. Get Arguments
               f"BC (D): {output_log['BC (D)']:.4E} | " + \
               f"BC (VN): {output_log['BC (VN)']:.4E}"
               )
-
-    # intermediate_results_list['solutions'] = intermediate_results
-    # intermediate_results_list['coordinates'] = batch[0]
-    # train_logger.dictionary['intermediate_results'] = intermediate_results_list
 
     # Save model checkpoints
     save_checkpoint(training_args["save_dir"], 
