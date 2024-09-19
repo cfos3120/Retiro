@@ -4,6 +4,8 @@ import numpy as np
 # Autograd Calculation of Gradients and Navier-Stokes Equations
 def ns_pde_numerical(model_input_coords, model_out_pure, Re, bc_index, pressure=False, hard_bc=False):
 
+    device = model_out_pure.device
+
     # find where boundaries end
     min_list = []
     for patch in bc_index['Boundary Indices']:
@@ -15,7 +17,7 @@ def ns_pde_numerical(model_input_coords, model_out_pure, Re, bc_index, pressure=
     C = model_out_pure.shape[-1]
     resolution = int(np.sqrt(min_bc_index))
     mesh_coords = model_input_coords[0,:min_bc_index,:].reshape(resolution, resolution, 2)
-    u = torch.zeros(B,resolution+2, resolution+2,C)
+    u = torch.zeros(B,resolution+2, resolution+2,C).to(device)
     dx = (mesh_coords[0,1,0] - mesh_coords[0,0,0]).item()
     dy = (mesh_coords[1,0,1] - mesh_coords[0,0,1]).item()
     
@@ -81,7 +83,9 @@ def ns_pde_numerical(model_input_coords, model_out_pure, Re, bc_index, pressure=
         return [f0,f1,f2], derivatives
 
 def bc_numerical(model_input_coords, model_out_pure, bc_index, loss_function=torch.nn.MSELoss()):
-        # find where boundaries end
+    device = model_out_pure.device
+    
+    # find where boundaries end
     min_list = []
     for patch in bc_index['Boundary Indices']:
         min_list += [bc_index['Boundary Indices'][patch].min()]
@@ -92,14 +96,14 @@ def bc_numerical(model_input_coords, model_out_pure, bc_index, loss_function=tor
     C = model_out_pure.shape[-1]
     resolution = int(np.sqrt(min_bc_index))
     #mesh_coords = model_input_coords[0,:min_bc_index,:].reshape(resolution, resolution, 2)
-    u = model_out_pure[:,:min_bc_index,:].reshape(B,resolution,resolution,C)
+    u = model_out_pure[:,:min_bc_index,:].reshape(B,resolution,resolution,C).to(device)
 
     d_loss = []
-    d_loss += [loss_function(model_out_pure[:,bc_index['Boundary Indices']['Lid'].flatten(),0], torch.ones(B,resolution, dtype=float))]
-    d_loss += [loss_function(model_out_pure[:,bc_index['Boundary Indices']['Lid'].flatten(),1], torch.zeros(B,resolution, dtype=float))]
-    d_loss += [loss_function(model_out_pure[:,bc_index['Boundary Indices']['Left Wall'].flatten(),:2], torch.zeros(B,resolution,2, dtype=float))]
-    d_loss += [loss_function(model_out_pure[:,bc_index['Boundary Indices']['Bottom Wall'].flatten(),:2], torch.zeros(B,resolution,2, dtype=float))]
-    d_loss += [loss_function(model_out_pure[:,bc_index['Boundary Indices']['Right Wall'].flatten(),:2], torch.zeros(B,resolution,2, dtype=float))]
+    d_loss += [loss_function(model_out_pure[:,bc_index['Boundary Indices']['Lid'].flatten(),0], torch.ones(B,resolution, dtype=float, device=device))]
+    d_loss += [loss_function(model_out_pure[:,bc_index['Boundary Indices']['Lid'].flatten(),1], torch.zeros(B,resolution, dtype=float, device=device))]
+    d_loss += [loss_function(model_out_pure[:,bc_index['Boundary Indices']['Left Wall'].flatten(),:2], torch.zeros(B,resolution,2, dtype=float, device=device))]
+    d_loss += [loss_function(model_out_pure[:,bc_index['Boundary Indices']['Bottom Wall'].flatten(),:2], torch.zeros(B,resolution,2, dtype=float, device=device))]
+    d_loss += [loss_function(model_out_pure[:,bc_index['Boundary Indices']['Right Wall'].flatten(),:2], torch.zeros(B,resolution,2, dtype=float, device=device))]
     d_loss = torch.mean(torch.stack(d_loss))
 
     vn_loss = []
