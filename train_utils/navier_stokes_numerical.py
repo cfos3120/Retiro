@@ -116,16 +116,19 @@ def bc_numerical(model_input_coords, model_out_pure, bc_index, loss_function=tor
     return d_loss, vn_loss 
 
 # Loss Function application and construction function
-def ns_pde_numerical_loss(model_input_coords, model_out_pure, Re, bc_index, loss_function=torch.nn.MSELoss(), pressure=False):
+def ns_pde_numerical_loss(model_input_coords, model_out_pure, Re, bc_index, loss_function=torch.nn.MSELoss(), loss_function2=torch.nn.MSELoss(), pressure=False):
 
     pde_eqns, derivatives = ns_pde_numerical(model_input_coords, model_out_pure, Re, bc_index, pressure=pressure, hard_bc=False)
 
     loss_list = list()
-    for pde_eqn in pde_eqns:
-        pde_loss = loss_function(pde_eqn,torch.zeros_like(pde_eqn))
+    for pde_i, pde_eqn in enumerate(pde_eqns):
+        if pde_i == 0:
+            pde_loss = loss_function2(pde_eqn,torch.zeros_like(pde_eqn))
+        else:
+            pde_loss = loss_function(pde_eqn,torch.zeros_like(pde_eqn))
         loss_list.append(pde_loss.float())
 
-    d_loss, vn_loss = bc_numerical(model_input_coords, model_out_pure, bc_index)
+    d_loss, vn_loss = bc_numerical(model_input_coords, model_out_pure, bc_index, loss_function=loss_function2)
     
     bc_loss_list = list()
     bc_loss_list.append(d_loss.float())

@@ -30,7 +30,7 @@ torch.cuda.manual_seed_all(ARGS.seed)
 get_seed(ARGS.seed, printout=True, cudnn=False)
 seed_generator = torch.Generator().manual_seed(42)
 
-def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), output_normalizer=None, keys_normalizer=None, dyn_loss_bal = False):
+def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), loss_function2=torch.nn.MSELoss(), output_normalizer=None, keys_normalizer=None, dyn_loss_bal = False):
 
     keys = ['PDE 1 (c)', 'PDE 2 (x)', 'PDE 3 (y)', 'BC (D)', 'BC (VN)'] #, 'PDE 4 (p)'
     loss_logger = loss_aggregator()
@@ -71,7 +71,8 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
                                                             Re=x_i, 
                                                             bc_index=index, 
                                                             pressure=False, 
-                                                            loss_function=loss_function
+                                                            loss_function=loss_function,
+                                                            loss_function2=loss_function2
                                                             )
     all_losses_list += pde_loss_list
 
@@ -92,6 +93,7 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), out
     loss_dict.update({'Supervised Loss':supervised_loss.item()})
     loss_dict.update({i:relobralo.lam[i].item() for i in relobralo.lam.keys()})
     loss_logger.add(loss_dict)
+ 
 
     # Update model
     print(total_losses_bal)
@@ -180,6 +182,7 @@ if __name__ == '__main__':# 0. Get Arguments
     relobralo = RELOBRALO(device=device)
 
     loss_fn = LP_custom() #Linf_custom()  #torch.nn.MSELoss()
+    loss_fn2 = Linf_custom()
 
     # 4. Train Epochs
     for epoch in range(training_args['epochs']):
@@ -188,6 +191,7 @@ if __name__ == '__main__':# 0. Get Arguments
                                     batch, 
                                     optimizer, 
                                     loss_function=loss_fn,
+                                    loss_function2=loss_fn2,
                                     output_normalizer=dataset.y_normalizer.to(device),
                                     keys_normalizer=dataset.xi_normalizer.to(device),
                                     dyn_loss_bal = training_args['dynamic_balance']
