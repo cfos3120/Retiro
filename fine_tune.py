@@ -72,7 +72,7 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), los
                                                             bc_index=index, 
                                                             pressure=False, 
                                                             loss_function=loss_function,
-                                                            loss_function2=loss_function2
+                                                            loss_function2=loss_function
                                                             )
     all_losses_list += pde_loss_list
 
@@ -84,7 +84,7 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), los
     #                        loss_function=loss_function,
     #                        ARGS=ARGS
     #                        )
-    all_losses_list += bc_loss_list
+    all_losses_list += bc_loss_list*1000
     total_losses_bal = relobralo(loss_list=all_losses_list) + 0.0*supervised_loss
 
     # Store losses:
@@ -186,6 +186,9 @@ if __name__ == '__main__':# 0. Get Arguments
 
     # 4. Train Epochs
     for epoch in range(training_args['epochs']):
+        
+        # try curriculm learning here: start from Re 1 -> 850
+
 
         output_log = fine_tune_case(model, 
                                     batch, 
