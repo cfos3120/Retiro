@@ -115,6 +115,6 @@ def parse_arguments():
 
     # for fine-tunings
     parser.add_argument('--case_n'    , type=int  , default=0)
-    parser.add_argument('--ckpt_path'    , type=str  , default=r'C:\Users\Noahc\Documents\USYD\PHD\0 - Work Space\analytics_v2_Retiro\test_aTrain_b0_c1_d0.8_h0.7') #no extension (this is added later)
+    parser.add_argument('--ckpt_path'    , type=str) #no extension (this is added later)
 
     return parser.parse_args()

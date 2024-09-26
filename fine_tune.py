@@ -160,8 +160,8 @@ if __name__ == '__main__':# 0. Get Arguments
     model = model.to(device)
 
     # Load checkpoint
-    ckpt = torch.load(model_args['ckpt_path']+'.pt', map_location=device)
-    model.load_ckpt(ckpt['model'])
+    # ckpt = torch.load(model_args['ckpt_path']+'.pt', map_location=device)
+    # model.load_ckpt(ckpt['model'])
 
     # 3. Training Hyperparameters:
     train_logger = total_loss_list(model_config=model_args, training_config=training_args, data_config=dataset_args)
