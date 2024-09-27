@@ -110,6 +110,7 @@ if __name__ == '__main__':# 0. Get Arguments
     dataset_args, model_args, training_args = get_default_args()
     dataset_args, model_args, training_args = args_override(dataset_args, model_args, training_args, ARGS)
     print(model_args['ckpt_path']+'_results.npy')
+    print(np.load(model_args['ckpt_path']+'_results.npy',allow_pickle=True).keys())
     loaded_model_args = np.load(model_args['ckpt_path']+'_results.npy',allow_pickle=True)['Model Configuration'] #.item()
     for setting in loaded_model_args:
         model_args[setting] = loaded_model_args[setting] 
