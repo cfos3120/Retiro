@@ -113,10 +113,12 @@ if __name__ == '__main__':# 0. Get Arguments
 
     loaded_model_args = np.load(model_args['ckpt_path']+'_results.npy',allow_pickle=True)
     
-    print(loaded_model_args)
     #[0]['Model Configuration'] #.item()
     for setting in loaded_model_args:
-        model_args[setting] = loaded_model_args[setting] 
+        print(loaded_model_args[setting])
+        model_args[setting] = loaded_model_args[setting]
+
+        
     
     # Override for Step Case
     dataset_args['name'] = 'Cavity'
