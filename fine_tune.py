@@ -84,7 +84,11 @@ def fine_tune_case(model, case, optimizer, loss_function=torch.nn.MSELoss(), los
     #                        loss_function=loss_function,
     #                        ARGS=ARGS
     #                        )
-    all_losses_list += bc_loss_list*1000
+
+    # add mulitplier to D BC conditions:
+    bc_loss_list[0] = bc_loss_list[0]*1000
+
+    all_losses_list += bc_loss_list
     total_losses_bal = relobralo(loss_list=all_losses_list) + 0.0*supervised_loss
 
     # Store losses:
