@@ -41,12 +41,12 @@ def ns_pde_numerical(model_input_coords, model_out_pure, Re, bc_index, pressure=
         u[:, :  , 0  , 2]  =  u[:, :  , 1  , 2]
 
         # Bottom Wall
-        u[:, 0  , :  , :2] = -u[:, 0  , :  , :2]
-        u[:, 0  , :  , 2] =  u[:, 0  , :  , 2]
+        u[:, 0  , :  , :2] = -u[:, 1  , :  , :2]
+        u[:, 0  , :  , 2] =  u[:, 1  , :  , 2]
 
         # Right Wall
-        u[:, :  ,-1  , :2] = -u[:, :  ,-1  , :2]
-        u[:, :  ,-1  , 2] = -u[:, :  ,-1  , 2]
+        u[:, :  ,-1  , :2] = -u[:, :  ,-2  , :2]
+        u[:, :  ,-1  , 2] =   u[:, :  ,-2  , 2]
 
     # Stack and Repeat Re for tensor multiplication
     Re = Re.squeeze(-1)
